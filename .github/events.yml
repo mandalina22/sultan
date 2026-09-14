@@ -1,0 +1,67 @@
+name: Etkinlik ve konser taraması
+
+on:
+  schedule:
+    # Günde iki kez. GitHub cron UTC çalışır ve yaz/kış saatini bilmez:
+    #   08:00 UTC -> yazın 10:00, kışın 09:00 Münih
+    #   16:00 UTC -> yazın 18:00, kışın 17:00 Münih
+    # Sabah turu ayrıca günlük raporu atar (aşağıda --report).
+    - cron: "0 8 * * *"
+    - cron: "0 16 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Sadece dene, Telegram'a gönderme"
+        type: boolean
+        default: false
+      report:
+        description: "Günlük rapor mesajı da gönder"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: radar-state
+  cancel-in-progress: false
+
+jobs:
+  etkinlik:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Etkinlik taraması
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
+        run: |
+          # github.event.schedule = tetikleyen cron ifadesi; sabah turunda rapor ekle
+          python -m src.main --events \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            ${{ (github.event.schedule == '0 8 * * *' || inputs.report) && '--report' || '' }}
+
+      - name: Hafızayı (seen.json) geri yaz
+        if: ${{ always() && !inputs.dry_run }}
+        run: |
+          git config user.name  "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet && echo "değişiklik yok" && exit 0
+          git commit -m "radar: etkinlik hafızası güncellendi [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin ${{ github.ref_name }} && \
+            git push && exit 0
+            sleep 5
+          done
+          echo "::warning::seen.json push edilemedi"
