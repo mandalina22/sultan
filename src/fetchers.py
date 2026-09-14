@@ -12,8 +12,10 @@ Tasarım kuralları:
   verdi, hangisi patladı. main bunu Telegram'a düşürebilir.
 """
 
+import calendar
 import json
 import urllib.robotparser
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 import feedparser
@@ -28,12 +30,20 @@ from bs4 import BeautifulSoup
 #     tanıtan bir User-Agent ile
 # okur. Kimliğini gizlemez, giriş gerektiren hiçbir yere girmez, içerik
 # kopyalamaz — sadece başlık + link toplar ve kaynağa yönlendirir.
+# NOT — v2.0'da buraya düz "BizimMunihRadar/2.0" yazmıştım ve Alman haber
+# siteleri (Merkur, tz, SZ, AZ, BR) 403 döndürüp botu kör bıraktı.
+# "Mozilla/5.0 (compatible; ...)" kalıbı iyi huylu botların standardı
+# (Googlebot da böyle tanıtır): hem kendimizi dürüstçe söylüyoruz hem de
+# sitelerin bot filtreleri bunu kabul ediyor. 403 gelirse bir kez daha
+# tarayıcı kimliğiyle deneniyor — RSS zaten makine için yayınlanıyor.
 HEADERS = {
-    "User-Agent": ("BizimMunihRadar/2.0 (+https://github.com/mandalina22/sultan; "
-                   "kisisel, ticari olmayan haber radari)"),
+    "User-Agent": ("Mozilla/5.0 (compatible; BizimMunihRadar/2.1; "
+                   "+https://github.com/mandalina22/sultan)"),
     "Accept": "application/rss+xml, application/xml, text/xml, application/json, text/html;q=0.8",
     "Accept-Language": "de-DE,de;q=0.9,tr;q=0.8,en;q=0.7",
 }
+TARAYICI_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
 TIMEOUT = 25
 MAX_PER_SOURCE = 40
 
@@ -68,6 +78,11 @@ class RobotsDisallowed(Exception):
 
 def _get(url: str) -> requests.Response:
     resp = requests.get(url, headers=HEADERS, timeout=TIMEOUT, allow_redirects=True)
+    if resp.status_code in (401, 403, 406, 429):
+        # Bot filtresine takıldık: bir kez tarayıcı kimliğiyle dene
+        ikinci = dict(HEADERS, **{"User-Agent": TARAYICI_UA})
+        resp = requests.get(url, headers=ikinci, timeout=TIMEOUT,
+                            allow_redirects=True)
     resp.raise_for_status()
     return resp
 
@@ -86,18 +101,22 @@ def _decode(resp: requests.Response) -> str:
                                    errors="replace")
 
 
-def _item(source: dict, title: str, summary: str, link: str) -> dict:
+def _item(source: dict, title: str, summary: str, link: str,
+          tarih: datetime | None = None) -> dict:
     return {
         "source": source["name"],
         "title": (title or "").strip()[:300],
         "summary": (summary or "").strip()[:1200],
         "link": (link or "").strip(),
+        # tarih: yayın zamanı (UTC). None = kaynak tarih vermiyor;
+        # o kaynaklarda tarih filtresi yerine "ilk tur sessiz" çalışır.
+        "tarih": tarih,
         # trusted: kelime filtresini atlar, LLM'e gider
         # direct : kelime filtresini DE LLM'i DE atlar, olduğu gibi gönderilir
         #          (zaten Türkçe olan resmi kaynaklar için — API tasarrufu)
         "trusted": source.get("trusted", False) or source.get("direct", False),
         "direct": source.get("direct", False),
-        "keyword_list": source.get("keyword_list", "default"),
+        "keyword_list": source.get("grup", source.get("keyword_list", "varsayilan")),
     }
 
 
@@ -108,6 +127,19 @@ def _strip_html(raw: str) -> str:
 
 
 # --------------------------------------------------------------------- RSS
+def _feed_tarihi(entry) -> datetime | None:
+    """RSS girişinden yayın tarihini UTC olarak çıkarır."""
+    for alan in ("published_parsed", "updated_parsed", "created_parsed"):
+        parsed = entry.get(alan)
+        if parsed:
+            try:
+                return datetime.fromtimestamp(calendar.timegm(parsed),
+                                              tz=timezone.utc)
+            except (ValueError, OverflowError, TypeError):
+                continue
+    return None
+
+
 def fetch_rss(source: dict, url: str) -> list[dict]:
     resp = _get(url)
     feed = feedparser.parse(resp.content)
@@ -115,7 +147,8 @@ def fetch_rss(source: dict, url: str) -> list[dict]:
     for entry in feed.entries[:MAX_PER_SOURCE]:
         summary = entry.get("summary") or entry.get("description") or ""
         items.append(_item(source, entry.get("title", ""),
-                           _strip_html(summary), entry.get("link", "")))
+                           _strip_html(summary), entry.get("link", ""),
+                           _feed_tarihi(entry)))
     return items
 
 
@@ -184,7 +217,17 @@ def parse_mvg(source: dict, data) -> list[dict]:
                 break
         if not link:
             link = f"https://www.mvg.de/verbindungen/betriebsmeldungen.html#{msg.get('publication', '')}"
-        items.append(_item(source, f"MVG: {title}", desc, link))
+        # publication: milisaniye cinsinden Unix zamanı
+        tarih = None
+        try:
+            ms = int(msg.get("publication") or 0)
+            if ms > 10_000_000_000:  # ms mi saniye mi
+                ms //= 1000
+            if ms > 0:
+                tarih = datetime.fromtimestamp(ms, tz=timezone.utc)
+        except (TypeError, ValueError, OSError, OverflowError):
+            pass
+        items.append(_item(source, f"MVG: {title}", desc, link, tarih))
     return items
 
 
@@ -201,11 +244,21 @@ def parse_nina(source: dict, data) -> list[dict]:
         tr = (alert.get("i18nTitle") or {}).get("TR") or ""
         severity = payload.get("severity", "")
         summary = f"Önem: {severity}. {tr}".strip()
+        tarih = None
+        ham = alert.get("sent") or alert.get("onset") or ""
+        if ham:
+            try:
+                tarih = datetime.fromisoformat(ham.replace("Z", "+00:00"))
+                if tarih.tzinfo is None:
+                    tarih = tarih.replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
         items.append(_item(
             source,
             f"UYARI: {headline}",
             summary,
             f"https://warnung.bund.de/meldungen/{alert.get('id', '')}",
+            tarih,
         ))
     return items
 

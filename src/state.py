@@ -1,9 +1,15 @@
-"""Görülen içeriklerin kaydı (dedup) + kaynak sağlık geçmişi.
+"""Hafıza: görülen içerikler, kaynak sağlığı, ilk tur (bootstrap) kaydı.
 
-data/seen.json  -> gönderilmiş/değerlendirilmiş link hash'leri, SIRALI.
-                   Sıralı olduğu için dosya dolunca en ESKİ kayıtlar atılır.
-data/health.json-> her kaynağın üst üste kaç turdur 0 item verdiği.
-                   Bir kaynak sessizce ölürse bot bunu fark edip haber verir.
+data/seen.json     -> gönderilmiş/değerlendirilmiş link hash'leri, SIRALI.
+                      Sıralı olduğu için dosya dolunca en ESKİ kayıt atılır.
+data/kaynaklar.json-> kaynak başına: üst üste kaç tur boş döndü,
+                      ilk turu yapıldı mı.
+
+İLK TUR (bootstrap) NEDEN VAR: Konsolosluk sayfası, mekan sayfaları ve
+dernek siteleri tarih vermiyor. Bir kaynak ilk kez tarandığında sayfada
+duran her şey "yeni" görünür — 3 yıllık duyurular dahil. O yüzden bir
+kaynağın İLK turunda bulunan her şey seen'e yazılır ama GÖNDERİLMEZ.
+O andan sonra eklenen her yeni içerik normal akışa girer.
 """
 
 import hashlib
@@ -12,9 +18,9 @@ from pathlib import Path
 
 DATA_DIR = Path("data")
 STATE_FILE = DATA_DIR / "seen.json"
-HEALTH_FILE = DATA_DIR / "health.json"
-MAX_ENTRIES = 8000
-DEAD_AFTER = 6  # bu kadar tur üst üste boş dönen kaynak "ölü" sayılır
+KAYNAK_FILE = DATA_DIR / "kaynaklar.json"
+MAX_ENTRIES = 12000
+OLU_SAYILIR = 6  # bu kadar tur üst üste boş dönen kaynak "ölü" sayılır
 
 
 def item_id(item: dict) -> str:
@@ -27,7 +33,7 @@ def load() -> list[str]:
         try:
             return json.loads(STATE_FILE.read_text())
         except json.JSONDecodeError:
-            print("[STATE] seen.json bozuk, sıfırdan başlanıyor")
+            print("[HAFIZA] seen.json bozuk, sıfırdan başlanıyor")
     return []
 
 
@@ -37,39 +43,68 @@ def save(seen: list[str]) -> None:
 
 
 def filter_new(items: list[dict], seen: list[str]) -> list[dict]:
-    known = set(seen)
-    new_items = [it for it in items if item_id(it) not in known]
-    print(f"[DEDUP] {len(items)} -> {len(new_items)} yeni item")
-    return new_items
+    bilinen = set(seen)
+    yeni = [it for it in items if item_id(it) not in bilinen]
+    print(f"[HAFIZA] {len(items)} -> {len(yeni)} yeni item")
+    return yeni
 
 
 def mark_seen(seen: list[str], items: list[dict]) -> None:
-    known = set(seen)
+    bilinen = set(seen)
     for it in items:
         iid = item_id(it)
-        if iid not in known:
+        if iid not in bilinen:
             seen.append(iid)
-            known.add(iid)
+            bilinen.add(iid)
 
 
-# ----------------------------------------------------------------- health
-def update_health(health: list[tuple[str, str]]) -> list[str]:
-    """Kaynak sağlığını günceller ve YENİ ölen kaynakların adını döner."""
+# -------------------------------------------------------------- kaynaklar
+def _kaynaklari_oku() -> dict:
     try:
-        counters = json.loads(HEALTH_FILE.read_text())
+        return json.loads(KAYNAK_FILE.read_text())
     except (OSError, json.JSONDecodeError):
-        counters = {}
+        return {}
 
-    newly_dead = []
-    for name, status in health:
-        if status == "kapalı":
-            continue
-        ok = not status.startswith("HATA")
-        before = counters.get(name, 0)
-        counters[name] = 0 if ok else before + 1
-        if counters[name] == DEAD_AFTER:
-            newly_dead.append(f"{name} — {status}")
 
+def _kaynaklari_yaz(veri: dict) -> None:
     DATA_DIR.mkdir(exist_ok=True)
-    HEALTH_FILE.write_text(json.dumps(counters, indent=1, ensure_ascii=False))
-    return newly_dead
+    KAYNAK_FILE.write_text(json.dumps(veri, indent=1, ensure_ascii=False))
+
+
+def ilk_turu_bekleyenler(kaynak_adlari: list[str]) -> set[str]:
+    """Daha önce hiç taranmamış kaynakların adlarını döner."""
+    veri = _kaynaklari_oku()
+    return {ad for ad in kaynak_adlari if not veri.get(ad, {}).get("ilk_tur")}
+
+
+def ilk_turu_isaretle(kaynak_adlari) -> None:
+    veri = _kaynaklari_oku()
+    for ad in kaynak_adlari:
+        veri.setdefault(ad, {})["ilk_tur"] = True
+    _kaynaklari_yaz(veri)
+
+
+def saglik_guncelle(saglik: list[tuple[str, str]]) -> tuple[list[str], int]:
+    """Kaynak sağlığını günceller.
+
+    Döner: (yeni ölen kaynakların listesi, o turdaki hatalı kaynak sayısı).
+    """
+    veri = _kaynaklari_oku()
+    yeni_olenler = []
+    hatali = 0
+
+    for ad, durum in saglik:
+        if durum == "kapalı":
+            continue
+        kayit = veri.setdefault(ad, {})
+        calisti = not durum.startswith("HATA")
+        if not calisti:
+            hatali += 1
+        onceki = kayit.get("bos", 0)
+        kayit["bos"] = 0 if calisti else onceki + 1
+        kayit["son_durum"] = durum[:120]
+        if kayit["bos"] == OLU_SAYILIR:
+            yeni_olenler.append(f"{ad} — {durum[:80]}")
+
+    _kaynaklari_yaz(veri)
+    return yeni_olenler, hatali

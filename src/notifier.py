@@ -81,19 +81,24 @@ def send(item: dict) -> bool:
     emoji = EMOJI.get(kategori, EMOJI["haber"])
     puan = item.get("puan")
 
-    head = f"{emoji} <b>{html.escape(item['title'])}</b>"
-    if not item.get("llm_checked", True):
-        head = "⚠️ (kontrol edilmedi) " + head
-
-    lines = [head, ""]
+    lines = [f"{emoji} <b>{html.escape(item['title'])}</b>", ""]
     if item.get("ozet"):
         lines.append(html.escape(item["ozet"]))
         lines.append("")
 
     meta = f"Kaynak: {html.escape(item['source'])}"
-    if puan is not None:
-        meta += f"  ·  Puan: {puan}/10  ·  #{kategori}"
+    if item.get("llm_checked", True) and puan is not None:
+        meta += f"  ·  Puan: {puan}/10"
+    elif item.get("skor") is not None:
+        # Kelime modu: LLM puanı yok, kelime skoru var
+        meta += f"  ·  Skor: {item['skor']}"
+    meta += f"  ·  #{kategori}"
     lines.append(meta)
+
+    # Hangi kelimeler tutturdu — ayar yaparken en çok işe yarayan bilgi
+    if item.get("eslesme"):
+        lines.append(f"<i>{html.escape(str(item['eslesme'])[:120])}</i>")
+
     lines.append(item["link"])
 
     return _post({"text": "\n".join(lines)[:TG_LIMIT], "parse_mode": "HTML"})

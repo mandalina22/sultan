@@ -117,7 +117,7 @@ def fetch_ticketmaster(artists: list[str]) -> list[dict]:
                     # Sanatçımız veya Türkçe etkinlikse filtresiz geçer;
                     # sadece "mega mekan" ise kelime filtresine tabi.
                     "trusted": artist_hit or turkish_hit,
-                    "keyword_list": "default",
+                    "keyword_list": "mekan",
                 })
 
             total = data.get("page", {}).get("totalPages", 1)
@@ -163,7 +163,7 @@ def _bt_one(artist: str) -> tuple[str, list[dict], bool]:
                 "summary": f"{artist} konseri · {venue.get('city', '')} · {date}",
                 "link": ev.get("url") or f"bt://{artist}/{date}",
                 "trusted": True,
-                "keyword_list": "default",
+                "keyword_list": "mekan",
             })
         return artist, found, True
     except Exception as e:
