@@ -83,5 +83,205 @@
   "ilk_tur": true,
   "bos": 1,
   "son_durum": "HATA: ConnectionError: HTTPSConnectionPool(host='www.tgb-bayern.de', port=443): Max retries exceeded with url: / (Caused"
+ },
+ "BR24": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "10 item"
+ },
+ "Merkur München": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "T.C. Münih Başkonsolosluğu": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "8 item"
+ },
+ "T.C. Dışişleri Bakanlığı Duyurular": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "tz München": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Anadolu Ajansı Güncel": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "30 item"
+ },
+ "BAMF Pressemitteilungen": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "NINA uyarılar — Landkreis München (API)": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "Münchner Wochenanzeiger": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: SSLError: HTTPSConnectionPool(host='www.wochenanzeiger-muenchen.de', port=443): Max retries exceeded with url: /rs"
+ },
+ "Süddeutsche München": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "MVG Betriebsmeldungen (API)": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Bundespolizei München": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "Bundesregierung Pressemitteilungen": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "YTB (Yurtdışı Türkler)": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 404 Client Error: Not Found for url: https://www.ytb.gov.tr/haberler"
+ },
+ "Hürriyet Anasayfa": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "NINA uyarılar — München Stadt (API)": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "Sözcü": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "Tagesschau (tümü)": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Bundestag Arbeit und Soziales": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "BAMF Meldungen": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "NTV Gündem": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "T.C. Berlin Büyükelçiliği": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: ConnectionError: HTTPSConnectionPool(host='berlin.be.mfa.gov.tr', port=443): Max retries exceeded with url: /Missi"
+ },
+ "Abendzeitung München": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Bundesregierung Artikel": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "BBC Türkçe": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "17 item"
+ },
+ "Merkur Bayern": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Bundestag Inneres": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "DW Türkçe": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "Euronews Türkçe": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Süddeutsche Bayern": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "TRT Haber Son Dakika": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Abendzeitung Bayern": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Abendzeitung Kultur": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "BMI (İçişleri Bakanlığı)": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 404 Client Error: Not Found for url: https://www.bmi.bund.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfe"
+ },
+ "Tagesschau Inland": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Stadt München Aktuelles": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "13 item"
+ },
+ "Milliyet Gündem": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "Rathaus Umschau": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "23 item"
+ },
+ "Hallo München": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Bundestag Kurzmeldungen (hib)": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
  }
 }
