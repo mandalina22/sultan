@@ -1,10 +1,11 @@
-name: radar-scan
+name: konser-scan
 
 on:
   schedule:
-    # Tuhaf dakikalar bilinçli: :00/:30 kalabalığından kaçıyoruz.
-    # 20 dk'da bir deneme = gecikme/atlama olsa bile boşluk ~1 saati aşmaz.
-    - cron: "9,29,49 * * * *"
+    # Günde iki kez: 06:17 ve 17:17 UTC. Dakika bilerek
+    # :00/:30'dan farklı seçildi ki haber taramasıyla aynı anda
+    # çalışıp state dosyasında çakışmasınlar.
+    - cron: "17 6,17 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -15,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  scan:
+  konser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,18 +28,19 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Taramayı çalıştır
+      - name: Konser taramasını çalıştır
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m src.main
+          TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
+        run: python -m src.main --concerts
 
       - name: State'i commit'le
         run: |
           git config user.name "radar-bot"
           git config user.email "radar-bot@users.noreply.github.com"
           git add data/seen.json
-          git diff --cached --quiet || git commit -m "chore: seen state güncelle"
+          git diff --cached --quiet || git commit -m "chore: konser seen state güncelle"
           git pull --rebase -X theirs
           git push || (git pull --rebase -X theirs && git push)

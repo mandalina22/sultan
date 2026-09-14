@@ -1,159 +1,160 @@
 # Münih Radar 📡
 
-Münih'te yaşayan Türkçe konuşan toplum için haber ve etkinlik radarı.
-Kaynakları tarar, kelime filtresinden geçirir, Gemini ile "gerçekten önemli
-mi?" diye doğrular ve sadece geçenleri Telegram'a düşürür. Tamamen ücretsiz
-katmanlarda çalışır (GitHub Actions + Gemini free tier + Telegram).
+Münih'teki Türkleri ilgilendiren haber, etkinlik ve konserleri otomatik bulup
+**Telegram'ına mesaj olarak** gönderen bot. Aylık maliyeti: **0 €**.
+
+Sen hiçbir şey yapmazsın — bot her 30 dakikada bir kendi kendine internet
+kaynaklarını tarar, ilgili bir şey bulursa telefonuna düşürür. Sen de
+beğendiklerini Instagram post'una çevirirsin.
+
+---
+
+## KURULUM
+
+Toplam 4 bölüm var. Sırayla git, hiçbirini atlama.
+Yaklaşık 20-30 dakika sürer ve **bir kere** yapılır.
+
+---
+
+### BÖLÜM 1 — İki anahtar topla (10 dk)
+
+Bir kağıda ya da telefonuna not alacağın **3 bilgi** var. Önce onları toplayalım.
+
+#### 1a. Telegram bot token'ı
+
+1. Telegram'ı aç, arama kutusuna **BotFather** yaz (mavi tikli olanı seç).
+2. Sohbeti aç, `/newbot` yaz ve gönder.
+3. Bot'una bir isim sorar → ne istersen yaz (ör. `Münih Radar`).
+4. Kullanıcı adı sorar → sonu `bot` ile bitmek zorunda (ör. `munihradar_bot`).
+5. BotFather sana uzun bir şifre verir, şuna benzer:
+   `7123456789:AAHfk3j2...`
+   👉 **Bunu not al. Bu senin TELEGRAM_BOT_TOKEN'ın.**
+
+#### 1b. Chat ID'n (botun sana yazacağı adres)
+
+1. Telegram aramasına **@userinfobot** yaz, sohbeti aç, **Start**'a bas.
+2. Sana `Id: 123456789` gibi bir sayı döner.
+   👉 **Bu sayıyı not al. Bu senin TELEGRAM_CHAT_ID'n.**
+3. Son olarak kendi bot'unu bul (1a'da verdiğin kullanıcı adıyla arat),
+   sohbetini aç ve **Start**'a bas. Bunu yapmazsan bot sana mesaj atamaz.
+
+#### 1c. Gemini API anahtarı (yapay zeka için, bedava)
+
+1. Tarayıcıda **aistudio.google.com** adresine git, Google hesabınla gir.
+2. **Get API key** → **Create API key** butonlarına bas.
+3. `AIza...` ile başlayan bir anahtar verir.
+   👉 **Bunu not al. Bu senin GEMINI_API_KEY'in.**
+   (Kart bilgisi istemez, istemeye kalkarsa yanlış yerdesin.)
+
+✅ **Kontrol:** Elinde 3 not olmalı: bot token, chat id, gemini key.
+
+---
+
+### BÖLÜM 2 — Dosyaları GitHub'a yükle (5 dk)
+
+⚠️ **En çok hata yapılan bölüm bu. Yavaş oku.**
+
+1. Sana verilen `muenchen-radar.zip` dosyasını bilgisayarında bir klasöre
+   çıkart (sağ tık → "Tümünü ayıkla" / "Extract").
+2. Çıkan `muenchen-radar` klasörünü aç. İçinde şunları görmelisin:
+   `config`, `src`, `.github`, `requirements.txt`, `README.md`
+   (`.github` klasörünü görmüyorsan: Windows'ta "Görünüm → Gizli öğeler"i,
+   Mac'te `Cmd+Shift+.` kısayolunu aç — noktayla başlayan klasörler gizlidir.)
+3. GitHub'da repo'nun ana sayfasına git (**Code** sekmesi).
+4. **Add file → Upload files**'a tıkla.
+5. Bilgisayarındaki klasörden şunları seçip sürükle-bırak:
+   **`config` klasörü, `src` klasörü, `requirements.txt`, `README.md`**
+   (`.github` zaten repo'da varsa tekrar yüklemene gerek yok.)
+6. Sayfanın altındaki yeşil **Commit changes** butonuna bas ve
+   yükleme bitene kadar bekle.
+
+⚠️ **Dikkat:** `muenchen-radar` klasörünün **kendisini değil, İÇİNDEKİLERİ**
+yüklüyorsun. Fark şu:
 
 ```
-kaynaklar ──► tarih filtresi ──► dedup ──► hafıza ──► ilk tur sessizliği
-          ──► AĞIRLIKLI KELİME PUANLAMASI ──► (LLM ikinci hakem)
-          ──► Telegram (puana göre sıralı)
+DOĞRU ✅                 YANLIŞ ❌
+repo/                    repo/
+├── .github/             └── muenchen-radar/
+├── config/                  ├── config/
+├── src/                     ├── src/
+└── requirements.txt         └── requirements.txt
 ```
 
-Kelime puanlaması tek başına yeterlidir; `GEMINI_API_KEY` olmadan da
-sistem düzgün çalışır, LLM varsa ikinci hakem olarak devreye girer.
+✅ **Kontrol:** Repo ana sayfasında dosya listesinde `.github`, `config`,
+`src` ve `requirements.txt` **yan yana, en dış seviyede** görünüyor olmalı.
+Görünmüyorsa bot ÇALIŞMAZ — bu adımı düzeltmeden devam etme.
 
-## Kurulum (5 dakika)
+---
 
-1. **Telegram**: @BotFather'dan bot oluştur → token. Botla bir kere konuş,
-   sonra `https://api.telegram.org/bot<TOKEN>/getUpdates` adresinden
-   `chat.id` değerini al.
-2. **Gemini**: https://aistudio.google.com → "Get API key" → ücretsiz anahtar.
-   Kredi kartı gerekmez.
-3. **Ticketmaster** (etkinlik taraması için, isteğe bağlı ama önerilir):
-   https://developer.ticketmaster.com → ücretsiz hesap → Consumer Key.
-4. **Bandsintown** (isteğe bağlı): https://artists.bandsintown.com/support
-   üzerinden ücretsiz `app_id` iste. Anahtar yoksa bu hat kapalı kalır —
-   API şartları kayıtlı anahtar istiyor, kaçak kullanmıyoruz.
-5. GitHub repo → **Settings → Secrets and variables → Actions** → şunları ekle:
+### BÖLÜM 3 — Anahtarları GitHub'a tanıt (5 dk)
 
-   | Secret                 | Zorunlu | Ne için                    |
-   |------------------------|---------|----------------------------|
-   | `TELEGRAM_BOT_TOKEN`   | evet    | bildirim                   |
-   | `TELEGRAM_CHAT_ID`     | evet    | bildirim                   |
-   | `GEMINI_API_KEY`       | önerilir| LLM doğrulaması            |
-   | `TICKETMASTER_API_KEY` | önerilir| konser/etkinlik taraması   |
-   | `BANDSINTOWN_APP_ID`   | hayır   | ek konser kaynağı          |
+Bölüm 1'de topladığın 3 notu şimdi GitHub'a gireceğiz. Bunlar "Secret"
+olarak saklanır — kodda görünmez, kimse okuyamaz, repo public olsa bile.
 
-   İsteğe bağlı **Variable**: `GEMINI_MODEL` (boş bırakılırsa bot kendisi
-   çalışan modeli bulur: 2.5-flash-lite → 2.5-flash → 2.0-flash).
+1. Repo sayfasında üstteki **Settings** sekmesine tıkla.
+2. Sol menüde **Secrets and variables → Actions**'a tıkla.
+3. Yeşil **New repository secret** butonuna bas.
+4. Şu üç secret'ı **tek tek** ekle. İsimleri buradan kopyala-yapıştır yap,
+   elle yazma — bir harf bile farklı olursa bot çalışmaz:
 
-6. **Actions** sekmesinde üç iş görünür. İlk çalıştırmayı elle yap:
-   *Kaynak sağlık testi* → "Run workflow". Ölü kaynak varsa Telegram'a düşer.
+   | Name (aynen böyle)   | Secret (senin notun)          |
+   |----------------------|-------------------------------|
+   | `TELEGRAM_BOT_TOKEN` | BotFather'ın verdiği uzun şifre |
+   | `TELEGRAM_CHAT_ID`   | @userinfobot'un verdiği sayı  |
+   | `GEMINI_API_KEY`     | AIza... ile başlayan anahtar  |
 
-> Repo **public** kalmalı: public repolarda Actions dakikası sınırsız.
-> Private yaparsan aylık 2.000 dakika kotası var; saatlik tarama ~1.100
-> dakika/ay eder, sığar ama pay dar kalır.
+✅ **Kontrol:** Secrets sayfasında 3 satır listeleniyor olmalı.
 
-## Günlük çalışma
+---
 
-| İş                    | Ne zaman            | Ne yapar                                  |
-|-----------------------|---------------------|-------------------------------------------|
-| Haber ve gündem       | saatte bir          | haber, resmi duyuru, MVG/NINA uyarıları   |
-| Etkinlik ve konser    | günde 2 (10:00, 18:00 yaz saati) | mekanlar + Ticketmaster + Bandsintown; sabah turu günlük rapor atar |
-| Kaynak sağlık testi   | pazartesi           | ölü feed'leri bildirir                    |
+### BÖLÜM 4 — Çalıştır (2 dk)
 
-Bot her turun sonunda `data/seen.json`'ı repoya geri commit'ler; böylece
-aynı haber iki kez gitmez.
+1. Repo sayfasında üstteki **Actions** sekmesine tıkla.
+2. Sol taraftan **radar-scan**'e tıkla.
+3. Sağda **Run workflow** butonuna bas → açılan kutuda yeşil
+   **Run workflow**'a bir daha bas.
+4. 10 saniye bekle, sayfayı yenile. Listede yeni bir çalışma belirir.
+5. 2-3 dakika içinde sonuçlanır:
+   - ✅ **Yeşil tik** → her şey çalıştı. Telegram'a mesaj geldiyse süper;
+     gelmediyse de sorun yok, o taramada paylaşmaya değer içerik
+     bulunamamıştır (aşağıdaki tabloya bak).
+   - ❌ **Kırmızı çarpı** → aşağıdaki hata tablosuna bak.
 
-## Yerelde deneme
+Bundan sonrası otomatik: bot her 30 dakikada bir kendi kendine çalışır.
+Bir daha bu sayfaya girmen gerekmez.
 
-```bash
-pip install -r requirements.txt
-export TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... GEMINI_API_KEY=...
-python -m src.main --ping             # Telegram bağlantısı
-python -m src.main --test-sources     # hangi kaynak kaç item veriyor
-python -m src.main --dry-run          # her şeyi yap, gönderme, state'e yazma
-python -m src.main --events --dry-run # etkinlik taraması
-```
+---
 
-## Ayar dosyaları — dokunman gereken sadece bunlar
+## BİR ŞEY TERS GİDERSE
 
-| Dosya                 | İçerik                                                  |
-|-----------------------|---------------------------------------------------------|
-| `config/sources.yml`  | kaynaklar (RSS / HTML / JSON API), grup, yedek URL      |
-| `config/keywords.yml` | kelime grupları — kural açıklamaları dosyanın başında   |
-| `config/artists.yml`  | sanatçı, grup, komedi, talkshow, tiyatro isimleri       |
+Kırmızı çarpıya tıkla → **scan** yazısına tıkla → solda adımlar listelenir,
+kırmızı olana tıkla → hata mesajı en alttadır. Sonra bu tabloya bak:
 
-### Puanlama nasıl çalışır
-
-Her kelimenin ağırlığı var, puanlar toplanır, eşiği geçen aday olur:
-
-| Katman | Puan | Anlamı |
+| Hata / Belirti | Sebep | Çözüm |
 |---|---|---|
-| `kesin` | tek başına yeter | Einbürgerung, Generalkonsulat, sanatçı adı… |
-| `guclu` | 2 | Türkei, Moschee, Streik, Olympiahalle… |
-| `baglam` | 1 | München, Konzert, Miete, Gesetz… |
-| `negatif` | −3 | Bundesliga, Horoskop, Werbung… |
-| `zorunlu` | KAPI | eşleşmezse puana bakılmadan elenir |
+| `requirements.txt ... not found` | Dosyalar yüklenmemiş ya da klasör içinde kalmış | Bölüm 2'yi baştan yap, "DOĞRU/YANLIŞ" şemasına bak |
+| `KeyError: 'GEMINI_API_KEY'` (veya başka isim) | O secret eksik ya da adı yanlış yazılmış | Bölüm 3'e dön, ismi kopyala-yapıştır ile düzelt |
+| `[TELEGRAM HATA] 401` | Bot token yanlış | BotFather'daki token'ı tekrar kopyala, secret'ı güncelle |
+| `[TELEGRAM HATA] 400` | Chat ID yanlış | @userinfobot'tan tekrar al; bot'una Start'a bastığından emin ol |
+| Yeşil tik ama Telegram'a hiç mesaj gelmiyor | O taramalarda eşiği geçen içerik yok | Normal. Birkaç saat bekle. Hâlâ yoksa log'da `[FETCH] ... 0 item` satırı var mı bak — varsa o kaynağın adresi bozuk demektir |
+| `[FETCH] KaynakAdı: 0 item` | O RSS adresi değişmiş | `config/sources.yml`'de o kaynağın adresini güncelle |
 
-**Başlıkta** geçen kelime 2 katı sayılır. Örnekler (`yerel` grubu, eşik 5):
+Çözemediğin bir hata olursa: kırmızı adımın log'undaki **son 5-10 satırı**
+kopyalayıp yardım istediğin kişiye/AI'a yapıştır. "Hata verdi" demek yerine
+o satırları göstermek çözümü 10 kat hızlandırır.
 
-```
-Türkei will EU-Beitritt                     türkei(4)                  = 4  ELENİR
-Türkei-Reisende: Regeln am Flughafen München türkei(4)+flughafen+münchen = 10 GEÇER
-Neue Einbürgerungstest-Fragen               kesin                         GEÇER
-Bundesliga: Bayern gewinnt                  bayern(2)+bundesliga(-6)   = -4 ELENİR
-```
+---
 
-`zorunlu` kapısı şunun için var: "Berlin'de Tarkan konseri" ne kadar puan
-alırsa alsın Münih'li için haber değil. Etkinlik kaynaklarında gidilebilir
-bir şehir, mekan sayfalarında Türkçe sinyal veya sanatçı adı zorunludur.
+## GÜNLÜK KULLANIM
 
-**Kelime işaretleri:**
+- Telegram'a düşen adaylardan beğendiklerini Instagram'da paylaş. Hepsi bu.
+- **Çok fazla alakasız bildirim mi geliyor?** → GitHub'da `src/main.py`
+  dosyasını aç (dosyaya tıkla → kalem ikonu), `MIN_SCORE = 6` satırını
+  `7` yap, commit'le.
+- **Yeni sanatçı/konu mu eklemek istiyorsun?** → `config/keywords.yml`
+  dosyasını GitHub'da aç, listeye bir satır ekle, commit'le.
+- **Yeni kaynak mı buldun?** (dernek sitesi, venue takvimi...) →
+  `config/sources.yml`'e ekle. Dosyanın içindeki örneklere bak, aynı
+  formatta yaz.
 
-- `"=kelime"` → tam kelime eşleşmesi
-- `"~kelime"` → tam kelime **ve** metinde sahne bağlamı (konzert, tour,
-  bilet, show…) olmalı. Türkçede günlük anlamı olan sanatçı adları için
-  şart: `~Duman`, `~Ceza`, `~Elif`, `~Sıla`.
-- işaretsiz, 6+ harf → alt-dize (`einbürgerung` → `Einbürgerungstest`)
-- işaretsiz, kısa → kelime başı + ek (`türk` → `Türken`, `türkisch`)
-
-### Tarih kuralı
-
-Geçmiş tarihli bir haber en fazla **24 saat** eski olabilir
-(`MAX_YAS_SAAT`, `src/main.py`). Gelecek tarihli içerik — 2036'ya
-duyurulmuş bir etkinlik bile — asla elenmez.
-
-Tarih vermeyen kaynaklar (konsolosluk, mekan sayfaları, dernekler) için
-**ilk tur sessizdir**: bir kaynak ilk kez tarandığında sayfada duran her
-şey hafızaya yazılır ama gönderilmez. Yoksa 3 yıllık duyurular bildirim
-olarak düşer.
-
-## Neden güvenilir
-
-- **Bir şey kaçmasın**: Almanca çekim/birleşik kelimeler yakalanır; her
-  kaynak için yedek URL; ölen kaynak 6 turdan sonra Telegram'a bildirilir;
-  kaynakların üçte birinden fazlası hata verirse "SİSTEM KÖR" uyarısı gider.
-- **Kaçanı gör**: günlük raporda "sınırda kalanlar" listesi var — eşiği
-  kıl payı geçemeyen başlıklar. Geçmesi gereken varsa söyle, ağırlığı
-  düzeltirim. Kör ayar yapmaya gerek kalmaz.
-- **Gürültü geçmesin**: ağırlıklı puanlama + (varsa) LLM ikinci hakem.
-- **Veri kaybolmasın**: gönderilemeyen mesaj ve kota yüzünden puanlanamayan
-  aday `seen`'e yazılmaz, sonraki turda tekrar denenir. `--dry-run` state'e
-  dokunmaz.
-- **Çökmesin**: Gemini anahtarı yoksa/kota bittiyse kelime moduna düşer ve
-  mesajlara ⚠️ koyar; Telegram 429'da bekler; feed indirme timeout'lu;
-  eş zamanlı iki run `seen.json`'ı ezmesin diye sıraya girer.
-
-## API'yi neden az kullanıyor (0 € hedefi)
-
-- Konsolosluk ve NINA uyarıları zaten Türkçe ve resmi → LLM'e hiç gitmez.
-- Aynı haberin gazete kopyaları LLM'e bir kez gider.
-- `~` işaretli belirsiz isimler bağlam olmadan aday olmaz.
-- 25'lik batch'ler, kısaltılmış özetler, kısa JSON çıktısı
-  (`[nr,puan,kat,özet]`), 6 altı puana özet istenmez.
-- Tipik gün: 24 haber turu + 2 etkinlik turu ≈ 30–60 Gemini isteği,
-  ~80k token. Ücretsiz kota model başına ~1.000–1.500 istek/gün ve
-  ~250k token/dakika; %5'ini bile kullanmıyoruz. Kredi kartı bağlı
-  değilse Google zaten ücret kesemez — kota dolarsa 429 döner, bot
-  bekler/erteler, fatura çıkmaz.
-
-## Yasal çerçeve
-
-Bot yalnızca sitelerin kendi yayınladığı RSS beslemelerini, herkese açık
-resmi API'leri (MVG, NINA, Ticketmaster, Bandsintown — anahtarlı) ve
-robots.txt'e uyarak herkese açık HTML sayfalarını okur. Kendini dürüst bir
-User-Agent ile tanıtır, giriş gerektiren hiçbir yere girmez, içerik
-kopyalamaz; sadece başlık + link toplar ve kaynağa yönlendirir.
+Bu üç dosya dışında hiçbir dosyaya dokunmana gerek yok.

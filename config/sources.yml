@@ -1,405 +1,124 @@
 # ============================================================
 # KAYNAK LİSTESİ
 # ------------------------------------------------------------
-# type: rss   -> requests ile indirilip feedparser ile okunur
-# type: html  -> requests + BeautifulSoup, link toplayıcı
-# type: json  -> resmi JSON API; "parser" hangi API olduğunu söyler
+# type: rss   -> feedparser ile okunur
+# type: html  -> requests + BeautifulSoup ile okunur
 #
-# grup: <isim>      -> config/keywords.yml içindeki puanlama grubu
-#                      (yerel / almanya_ulusal / bund / turkiye_medya /
-#                       diaspora / mvg / etkinlik_avrupa / mekan / dernek)
-# trusted: true     -> puanlama atlanır, doğrudan LLM'e/gönderime gider
-# direct: true      -> puanlama DA LLM DE atlanır, olduğu gibi gönderilir
-#                      (zaten Türkçe ve resmi kaynaklar)
-# url_fallback      -> ana URL ölürse sırayla denenir
-# scan: news|events -> news saatte bir, events günde iki kez
+# trusted: true        -> prefilter atlanır, her yeni içerik LLM'e gider
+# keyword_list: <isim> -> hangi kelime grubuyla filtreleneceği
+#                         (varsayılan: "default", Türk ulusal medya
+#                          için: "turkey_major")
 #
-# NOT: "# ?" işaretli kaynakların adresi doğrulanamadı; ilk kaynak
-# sağlık testinde ölü çıkarsa düzeltilecek.
+# Kurulumdan sonra şunu çalıştırıp 0 item dönen kaynakları düzelt:
+#   python -m src.main --test-sources
 # ============================================================
 
 sources:
-  # ==========================================================
-  # 1) MÜNİH / BAVYERA YEREL BASINI
-  # ==========================================================
+  # ================= MÜNİH / BAVYERA MEDYASI =================
   - name: "Merkur München"
     type: rss
-    grup: yerel
     url: "https://www.merkur.de/lokales/muenchen/rssfeed.rdf"
-    url_fallback: ["https://www.merkur.de/lokales/muenchen/rss"]
 
   - name: "Merkur Bayern"
     type: rss
-    grup: yerel
     url: "https://www.merkur.de/bayern/rssfeed.rdf"
 
   - name: "tz München"
     type: rss
-    grup: yerel
     url: "https://www.tz.de/muenchen/rssfeed.rdf"
-
-  - name: "Hallo München"                      # ?
-    type: rss
-    grup: yerel
-    url: "https://www.hallo-muenchen.de/rssfeed.rdf"
-    url_fallback: ["https://www.hallo-muenchen.de/muenchen/rssfeed.rdf"]
 
   - name: "Süddeutsche München"
     type: rss
-    grup: yerel
     url: "https://rss.sueddeutsche.de/rss/Muenchen"
-
-  - name: "Süddeutsche Bayern"                 # ?
-    type: rss
-    grup: yerel
-    url: "https://rss.sueddeutsche.de/rss/Bayern"
 
   - name: "Abendzeitung München"
     type: rss
-    grup: yerel
     url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/muenchen-news-abendzeitung.xml"
 
   - name: "Abendzeitung Bayern"
     type: rss
-    grup: yerel
     url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/bayern-abendzeitung.xml"
 
   - name: "Abendzeitung Kultur"
+    # Konser ve etkinlik duyuruları için değerli
     type: rss
-    grup: yerel
     url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/kultur-news-abendzeitung.xml"
 
   - name: "BR24"
     type: rss
-    grup: yerel
     url: "https://www.br.de/nachrichten/meldungen/nachrichten-bayerischer-rundfunk100~newsRss.xml"
 
-  - name: "Münchner Wochenanzeiger"            # ?
+  # ================= ALMANYA ULUSAL MEDYASI ==================
+  - name: "Tagesschau"
+    # Türk/Türkiye bağlantılı VEYA Münih geçen her ulusal haber gönderilir
     type: rss
-    grup: yerel
-    url: "https://www.wochenanzeiger-muenchen.de/rss/muenchen.xml"
-    url_fallback: ["https://www.wochenanzeiger-muenchen.de/rss"]
-
-  - name: "Bundespolizei München"
-    # Havalimanı, tren istasyonları, sınır — doğrulandı
-    type: rss
-    grup: yerel
-    url: "https://www.presseportal.de/rss/dienststelle_64017.rss2"
-
-  # ==========================================================
-  # 2) MÜNİH RESMİ / ŞEHİR YÖNETİMİ
-  # ==========================================================
-  - name: "Rathaus Umschau"
-    # Şehrin resmi günlük bülteni: Stadtrat kararları, KVR duyuruları
-    type: html
-    grup: yerel
-    url: "https://ru.muenchen.de/"
-    item_selector: "a"
-    link_must_contain: "/20"
-    min_text_len: 25
-
-  - name: "Stadt München Aktuelles"            # ?
-    type: html
-    grup: yerel
-    url: "https://stadt.muenchen.de/news.html"
-    url_fallback: ["https://stadt.muenchen.de/infos/aktuelle-meldungen.html"]
-    item_selector: "a"
-    min_text_len: 25
-
-  - name: "MVG Betriebsmeldungen (API)"
-    # Resmi JSON API, anahtarsız — doğrulandı
-    type: json
-    parser: mvg
-    grup: mvg
-    url: "https://www.mvg.de/api/bgw-pt/v3/messages"
-
-  - name: "NINA uyarılar — München Stadt (API)"
-    # Bundesamt für Bevölkerungsschutz, Türkçe çeviri de geliyor — doğrulandı
-    type: json
-    parser: nina
-    grup: mvg
-    url: "https://warnung.bund.de/api31/dashboard/091620000000.json"
-    direct: true
-
-  - name: "NINA uyarılar — Landkreis München (API)"
-    type: json
-    parser: nina
-    grup: mvg
-    url: "https://warnung.bund.de/api31/dashboard/091840000000.json"
-    direct: true
-
-  # ==========================================================
-  # 3) ALMANYA FEDERAL — "burada yaşayanı etkileyen" hattı
-  # ==========================================================
-  - name: "Tagesschau (tümü)"
-    type: rss
-    grup: almanya_ulusal
     url: "https://www.tagesschau.de/infoservices/alle-meldungen-100~rss2.xml"
-    url_fallback: ["https://www.tagesschau.de/index~rss2.xml"]
+    keyword_list: germany_national
 
-  - name: "Tagesschau Inland"
-    type: rss
-    grup: almanya_ulusal
-    url: "https://www.tagesschau.de/inland/index~rss2.xml"
+  # ================= TÜRKİYE ULUSAL MEDYASI ==================
+  # DİKKAT: Bu kaynaklar dar "turkey_major" listesiyle filtrelenir.
+  # Sadece deprem/seçim/milli takım gibi büyük olaylar ve
+  # Almanya/gurbetçi/vize içeren haberler geçer.
 
-  - name: "Bundesregierung Pressemitteilungen"
-    # Doğrulandı
-    type: rss
-    grup: bund
-    url: "https://www.bundesregierung.de/service/rss/breg-de/1151244/feed.xml"
-
-  - name: "Bundesregierung Artikel"
-    type: rss
-    grup: bund
-    url: "https://www.bundesregierung.de/service/rss/breg-de/1151246/feed.xml"
-
-  - name: "Bundestag Kurzmeldungen (hib)"
-    # Doğrulandı
-    type: rss
-    grup: bund
-    url: "https://www.bundestag.de/static/appdata/includes/rss/hib.rss"
-
-  - name: "Bundestag Inneres"
-    type: rss
-    grup: bund
-    url: "https://www.bundestag.de/static/appdata/includes/rss/inneres.rss"
-
-  - name: "Bundestag Arbeit und Soziales"
-    type: rss
-    grup: bund
-    url: "https://www.bundestag.de/static/appdata/includes/rss/arbeitsoziales.rss"
-
-  - name: "BAMF Meldungen"
-    # Göç, vatandaşlık, entegrasyon kursları — doğrulandı, filtresiz geçer
-    type: rss
-    grup: bund
-    url: "https://www.bamf.de/SiteGlobals/Functions/RSS/DE/Feed/RSSNewsfeed_Meldungen.xml?nn=282672"
-    trusted: true
-
-  - name: "BAMF Pressemitteilungen"
-    type: rss
-    grup: bund
-    url: "https://www.bamf.de/SiteGlobals/Functions/RSS/DE/Feed/RSSNewsfeed_Pressemitteilungen.xml?nn=282672"
-    trusted: true
-
-  - name: "BMI (İçişleri Bakanlığı)"           # ?
-    type: rss
-    grup: bund
-    url: "https://www.bmi.bund.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/RSSNewsfeed.xml"
-
-  # ==========================================================
-  # 4) TÜRKİYE ULUSAL MEDYASI — dar filtre, yüksek eşik
-  # ==========================================================
   - name: "TRT Haber Son Dakika"
     type: rss
-    grup: turkiye_medya
     url: "https://www.trthaber.com/sondakika.rss"
+    keyword_list: turkey_major
 
   - name: "NTV Gündem"
     type: rss
-    grup: turkiye_medya
     url: "https://www.ntv.com.tr/gundem.rss"
+    keyword_list: turkey_major
 
   - name: "Hürriyet Anasayfa"
     type: rss
-    grup: turkiye_medya
     url: "https://www.hurriyet.com.tr/rss/anasayfa"
+    keyword_list: turkey_major
 
-  - name: "Anadolu Ajansı Güncel"
-    type: rss
-    grup: turkiye_medya
-    url: "https://www.aa.com.tr/tr/rss/default?cat=guncel"
-
-  - name: "Sözcü"                               # ?
-    type: rss
-    grup: turkiye_medya
-    url: "https://www.sozcu.com.tr/feed/"
-
-  - name: "Milliyet Gündem"                     # ?
-    type: rss
-    grup: turkiye_medya
-    url: "https://www.milliyet.com.tr/rss/rssnew/gundemrss.xml"
-
-  # ==========================================================
-  # 5) DİASPORA MEDYASI — Alman gündemini Türkçe veriyor.
-  #    Hedef kitle için en değerli hat, eşik düşük.
-  # ==========================================================
-  - name: "DW Türkçe"
-    type: rss
-    grup: diaspora
-    url: "https://rss.dw.com/rdf/rss-tur-all"
-    url_fallback: ["https://rss.dw.com/xml/rss-tur-all"]
-
-  - name: "Euronews Türkçe"
-    type: rss
-    grup: diaspora
-    url: "https://tr.euronews.com/rss"
-
-  - name: "BBC Türkçe"                          # ?
-    type: rss
-    grup: diaspora
-    url: "https://feeds.bbci.co.uk/turkce/rss.xml"
-
-  # ==========================================================
-  # 6) TÜRK RESMİ KURUMLARI
-  # ==========================================================
-  - name: "T.C. Münih Başkonsolosluğu"
-    # Doğrulandı. direct: zaten Türkçe ve resmi, olduğu gibi gider.
+  # ================= RESMİ / KONSOLOSLUK =====================
+  - name: "T.C. Münih Başkonsolosluğu Duyurular"
     type: html
-    grup: dernek
     url: "https://munih-bk.mfa.gov.tr/Mission"
-    direct: true
+    trusted: true
     item_selector: "a"
     link_must_contain: "showannouncement"
 
-  - name: "T.C. Dışişleri Bakanlığı Duyurular"  # ?
+  # ================= ETKİNLİK / KONSER =======================
+  # Venue sayfalarının resmi RSS'i yok; HTML taraması için her sitenin
+  # kendi selector'u ayarlanmalı. Şablonlar aşağıda kapalı duruyor —
+  # açmak istersen selector'u siteye göre ayarlamak gerekiyor,
+  # bunu birlikte yaparız.
+  - name: "Muffatwerk Events"
     type: html
-    grup: diaspora
-    url: "https://www.mfa.gov.tr/duyurular.tr.mfa"
+    url: "https://muffatwerk.de/de/events"
     item_selector: "a"
-    link_must_contain: "duyuru"
+    enabled: false
 
-  - name: "T.C. Berlin Büyükelçiliği"           # ?
+  - name: "Backstage München"
     type: html
-    grup: diaspora
-    url: "https://berlin.be.mfa.gov.tr/Mission"
+    url: "https://backstage.eu/veranstaltungen/live.html"
     item_selector: "a"
-    link_must_contain: "showannouncement"
+    enabled: false
 
-  - name: "YTB (Yurtdışı Türkler)"              # ?
+  - name: "Olympiapark Events"
     type: html
-    grup: diaspora
-    url: "https://www.ytb.gov.tr/haberler"
+    url: "https://www.olympiapark.de/de/veranstaltungen-tickets/veranstaltungen"
     item_selector: "a"
-    link_must_contain: "/haberler/"
+    enabled: false
 
-  # ==========================================================
-  # 7) ETKİNLİK / KONSER — günde iki kez taranır
-  # ==========================================================
-  - name: "Event Türk (RSS)"                    # ?
+  # ============ TÜRK DİASPORA ETKİNLİK PLATFORMU ============
+  # eventturk.de: Avrupa'daki Türkçe konser/tiyatro/stand-up kataloğu.
+  # Tüm kıtayı listelediği için "gidilebilir şehir" filtresi uygulanır
+  # (bavaria_reach listesi) — Berlin konseri elenir, Münih/Stuttgart geçer.
+  - name: "Event Türk (RSS)"
     type: rss
-    grup: etkinlik_avrupa
     url: "https://eventturk.de/feed/"
-    scan: events
+    keyword_list: bavaria_reach
 
-  - name: "Event Türk (liste)"                  # ?
+  - name: "Event Türk (liste)"
+    # RSS bir gün kapanırsa yedek: etkinlik listesinin HTML taraması
     type: html
-    grup: etkinlik_avrupa
     url: "https://eventturk.de/etkinlik/"
     item_selector: "a"
     link_must_contain: "/etkinlik/"
-    scan: events
-
-  - name: "Turkfest"                            # ?
-    type: html
-    grup: etkinlik_avrupa
-    url: "https://www.turkfest.de/event/"
-    item_selector: "a"
-    link_must_contain: "/event"
-    scan: events
-
-  - name: "EvenTurk Almanya"                    # ?
-    type: html
-    grup: etkinlik_avrupa
-    url: "https://eventurk.com/almanya"
-    item_selector: "a"
-    scan: events
-
-  - name: "Vasistdas etkinlik takvimi"          # ?
-    type: html
-    grup: etkinlik_avrupa
-    url: "https://vasistdas.de/almanya-konser-etkinlik-takvimi/"
-    item_selector: "a"
-    scan: events
-
-  # --- Münih mekanları: Türkçe etkinlik sinyali aranır ---
-  - name: "Muffatwerk"                          # ?
-    type: html
-    grup: mekan
-    url: "https://www.muffatwerk.de/de/events"
-    url_fallback: ["https://muffatwerk.de/de/events"]
-    item_selector: "a"
-    scan: events
-
-  - name: "Backstage München"                   # ?
-    type: html
-    grup: mekan
-    url: "https://backstage.eu/veranstaltungen/live.html"
-    item_selector: "a"
-    scan: events
-
-  - name: "Olympiapark Veranstaltungen"         # ?
-    type: html
-    grup: mekan
-    url: "https://www.olympiapark.de/de/veranstaltungen-tickets/veranstaltungen/"
-    item_selector: "a"
-    scan: events
-
-  - name: "Zenith / Motorworld"                 # ?
-    type: html
-    grup: mekan
-    url: "https://www.motorworld-muenchen.de/veranstaltungen/"
-    item_selector: "a"
-    scan: events
-
-  - name: "Circus Krone"                        # ?
-    type: html
-    grup: mekan
-    url: "https://www.circus-krone.de/veranstaltungen/"
-    item_selector: "a"
-    scan: events
-
-  - name: "Tonhalle München"                    # ?
-    type: html
-    grup: mekan
-    url: "https://www.tonhalle-muenchen.de/programm/"
-    item_selector: "a"
-    scan: events
-
-  - name: "Alte Kongresshalle"                  # ?
-    type: html
-    grup: mekan
-    url: "https://altekongresshalle.de/veranstaltungen/"
-    item_selector: "a"
-    scan: events
-
-  - name: "Löwenbräukeller"                     # ?
-    type: html
-    grup: mekan
-    url: "https://www.loewenbraeukeller.com/veranstaltungen/"
-    item_selector: "a"
-    scan: events
-
-  - name: "München Ticket"                      # ?
-    type: html
-    grup: mekan
-    url: "https://www.muenchenticket.de/"
-    item_selector: "a"
-    scan: events
-
-  # ==========================================================
-  # 8) MÜNİH TÜRK TOPLUM KURUMLARI
-  # ==========================================================
-  - name: "DITIB Bayern"                        # ?
-    type: html
-    grup: dernek
-    url: "https://www.ditib-bayern.de/"
-    item_selector: "a"
-    min_text_len: 20
-    scan: events
-
-  - name: "Türkische Gemeinde in Bayern"        # ?
-    type: html
-    grup: dernek
-    url: "https://www.tgb-bayern.de/"
-    item_selector: "a"
-    min_text_len: 20
-    scan: events
-
-  - name: "MEB Münih Eğitim Ataşeliği"          # ?
-    type: html
-    grup: dernek
-    url: "https://munih.meb.gov.tr/"
-    item_selector: "a"
-    min_text_len: 20
-    scan: events
+    keyword_list: bavaria_reach

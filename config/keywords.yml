@@ -1,492 +1,258 @@
 # ============================================================
-# KELİME SÖZLÜĞÜ — AĞIRLIKLI PUANLAMA
+# KELİME LİSTELERİ (iki grup var)
 # ------------------------------------------------------------
-# Eski sistem: bir kelime eşleşti mi aday. Çok kaba, çok gürültülü.
-# Yeni sistem: her kelimenin ağırlığı var, puanlar toplanır,
-# eşiği geçen aday olur.
+# default:      Münih/Almanya kaynakları için. Bu kelimelerden biri
+#               geçen içerik LLM'e gider.
+# turkey_major: Türkiye ulusal medyası için. Türk haber sitelerinde
+#               HER haber Türkiye'yle ilgili olduğundan, oradan sadece
+#               ÇOK BÜYÜK olayları yakalayacak dar bir liste kullanılır.
 #
-#   kesin   -> tek başına yeter, hemen aday (100 puan)
-#   guclu   -> 2 puan
-#   baglam  -> 1 puan
-#   negatif -> 3 puan DÜŞÜRÜR (spor rutini, magazin, reklam)
-#
-# BAŞLIKTA geçen kelime 2 KATI sayılır; özette geçen tesadüf
-# olabilir, başlıkta geçen olmaz.
-#
-# Varsayılan eşik 3. Yani:
-#   "Türkei will EU-Beitritt"                 türkei(2)              = 2  ELENİR
-#   "Türkei-Reisende: Regeln am Flughafen München"
-#                                              türkei(2x2)+münchen(1) = 5  GEÇER
-#   "Neue Einbürgerungstest-Fragen"           kesin                      GEÇER
-#   "Bundesliga: Bayern gewinnt"              bayern(1)+bundesliga(-3)= -2 ELENİR
-#
-# EŞLEŞME KURALLARI (src/scoring.py):
-#   "=kelime"  -> TAM kelime
-#   "~kelime"  -> TAM kelime + metinde sahne bağlamı (konser/tour/bilet)
-#                 Türkçede günlük anlamı olan sanatçı adları için
-#   6+ harfli  -> düz alt-dize ("einbürgerung" -> "Einbürgerungstest")
-#   daha kısa  -> kelime başı + serbest ek ("türk" -> "Türken", "türkisch")
+# Eşleşme: küçük/büyük harf duyarsız, kelime sınırlı (yani "eno"
+# kelimesi "Renovierung" içinde eşleşmez).
 # ============================================================
 
-# ------------------------------------------------------------
-# ORTAK SÖZLÜK — bütün gruplar bunu kullanır
-# ------------------------------------------------------------
-ortak:
+default:
+  # --- Genel Türk / Türkiye ---
+  - "türk"
+  - "türkisch"
+  - "türkischstämmig"
+  - "türkei"
+  - "türkiye"
+  - "turkish"
+  - "erdoğan"
+  - "erdogan"
+
+  # --- Resmi / hukuki ---
+  - "konsulat"
+  - "generalkonsulat"
+  - "başkonsolosluk"
+  - "doppelpass"
+  - "doppelte staatsbürgerschaft"
+  - "staatsbürgerschaft"
+  - "einbürgerung"
+  - "aufenthalt"
+  - "niederlassungserlaubnis"
+  - "visum"
+  - "ausländerbehörde"
+  - "abschiebung"
+  - "kvr"
+
+  # --- Din / kültür / topluluk ---
+  - "moschee"
+  - "ditib"
+  - "ramadan"
+  - "ramazan"
+  - "bayram"
+  - "zuckerfest"
+  - "opferfest"
+  - "döner"
+  - "gastarbeiter"
+  - "anwerbeabkommen"
+  - "rassistisch"
+
+  # --- Münih günlük yaşam (story malzemesi: herkesin gündemi) ---
+  - "streik"
+  - "mvg"
+  - "s-bahn"
+  - "stammstrecke"
+  - "flughafen münchen"
+  - "unwetter"
+
+  # --- Mega mekan / mega etkinlik sinyalleri ---
+  # Amaç: Türk bağlantısı olmayan ama şehri saran dev olayları yakalamak
+  # (stadyum konserleri, dev festivaller). Mantık: dev konserler dev
+  # mekanlarda olur — sanatçıyı değil mekanı izliyoruz.
+  - "olympiastadion"
+  - "olympiahalle"
+  - "olympiapark"
+  - "allianz arena"
+  - "sap garden"
+  - "zenith"
+  - "königsplatz"
+  - "messe münchen"
+  - "tollwood"
+  - "oktoberfest"
+  - "wiesn"
+  - "frühlingsfest"
+  - "ausverkauft"
+  - "welttournee"
+  - "stadionkonzert"
+  # Nürnberg / Bavyera geneli
+  - "rock im park"
+  - "zeppelinfeld"
+  - "max-morlock"
+
+  # --- Futbol (Münih'te ŞL maçı, topluluk buluşmaları vs.) ---
+  - "galatasaray"
+  - "fenerbahçe"
+  - "fenerbahce"
+  - "beşiktaş"
+  - "besiktas"
+  - "trabzonspor"
 
   # ==========================================================
-  # KESİN — tek başına bildirim hak eder
+  # SANATÇILAR — Almanya turnesi yapan / yapabilecek isimler
+  # Yeni isim eklemek: alta bir satır ekle, commit'le. Hepsi bu.
   # ==========================================================
-  kesin:
-    # --- Alman resmi / hukuki: doğrudan hedef kitleyi ilgilendirir ---
-    - "generalkonsulat"
-    - "einbürgerung"            # Einbürgerungstest, Einbürgerungsurkunde…
-    - "doppelpass"
-    - "doppelte staatsbürgerschaft"
-    - "staatsangehörigkeitsrecht"
-    - "staatsbürgerschaftsrecht"
-    - "aufenthaltstitel"
-    - "aufenthaltserlaubnis"
-    - "niederlassungserlaubnis"
-    - "aufenthaltsgesetz"
-    - "ausländerbehörde"
-    - "familiennachzug"
-    - "integrationskurs"
-    - "chancenaufenthalt"
-    - "fachkräfteeinwanderung"
-    - "blaue karte eu"
-    - "abschiebeflug"
-    - "visumpflicht"
-    - "visaverfahren"
-    - "aufenthaltsrecht"
-    - "duldung"
-    - "asylverfahren"
-    # --- Türk toplumu, açıkça adı geçenler ---
-    - "türkischstämmig"
-    - "türkeistämmig"
-    - "türkische gemeinde"
-    - "türkischer verein"
-    - "ditib"
-    - "islamunterricht"
-    - "moscheeverein"
-    - "anwerbeabkommen"
-    - "gastarbeiter"
-    - "türkisches konsulat"
-    - "türkisches generalkonsulat"
-    # --- Türkçe resmi ---
-    - "başkonsolosluk"
-    - "baskonsoloslugu"
-    - "çifte vatandaşlık"
-    - "cifte vatandaslik"
-    - "mavi kart"
-    - "oturum izni"
-    - "ikamet izni"
-    - "bedelli askerlik"
-    - "dövizle askerlik"
-    - "yurt dışı seçmen"
-    - "yurtdışı seçmen"
-    - "gurbetçi"
-    - "diploma denkliği"
-    - "denklik belgesi"
-    - "vatandaşlıktan çıkma"
-    - "mavi kartlı"
-    # --- Münih'te hayatı durduran olaylar ---
-    - "stammstrecke gesperrt"
-    - "warnstreik"
-    - "generalstreik"
-    - "katastrophenalarm"
-    - "hochwasseralarm"
+  # Pop
+  - "tarkan"
+  - "sezen aksu"
+  - "kenan doğulu"
+  - "mustafa sandal"
+  - "hande yener"
+  - "demet akalın"
+  - "gülşen"
+  - "murat boz"
+  - "edis"
+  - "aleyna tilki"
+  - "mert demir"
+  - "simge"
+  - "zeynep bastık"
+  - "irem derici"
+  - "derya uluğ"
+  - "merve özbey"
+  - "bengü"
+  - "tuğçe kandemir"
+  - "mustafa ceceli"
+  - "sinan akçıl"
+  - "berkay"
+  - "oğuzhan koç"
+  - "buray"
+  - "ilyas yalçıntaş"
+  - "ebru gündeş"
+  - "ebru yaşar"
+  - "bilal sonses"
+  - "semicenk"
+  - "sıla"
+  - "sertab erener"
+  - "melek mosso"
+  - "melike şahin"
+  # Rock / indie
+  - "duman"
+  - "teoman"
+  - "mor ve ötesi"
+  - "athena"
+  - "manga"
+  - "şebnem ferah"
+  - "hayko cepkin"
+  - "emre aydın"
+  - "feridun düzağaç"
+  - "pinhani"
+  - "adamlar"
+  - "gripin"
+  - "büyük ev ablukada"
+  - "son feci bisiklet"
+  - "yüzyüzeyken konuşuruz"
+  - "madrigal"
+  - "gaye su akyol"
+  - "cem adrian"
+  - "manuş baba"
+  - "emir can iğrek"
+  - "dedublüman"
+  # Rap
+  - "ezhel"
+  - "ceza"
+  - "sagopa kajmer"
+  - "şanışer"
+  - "gazapizm"
+  - "norm ender"
+  - "çakal"
+  - "blok3"
+  - "lvbel c5"
+  - "ati242"
+  # Halk / arabesk / sanat
+  - "ibrahim tatlıses"
+  - "orhan gencebay"
+  - "yıldız tilbe"
+  - "cengiz kurtoğlu"
+  - "hakan altun"
+  - "hüsnü şenlendirici"
+  - "selda bağcan"
+  - "haluk levent"
+  - "koray avcı"
+  - "zülfü livaneli"
+  - "fazıl say"
+  # Elektronik / dünya
+  - "altın gün"
+  - "islandman"
+  - "mahmut orhan"
+  - "burak yeter"
+  - "derya yıldırım"
+  # Almanya'daki Türk kökenli sanatçılar
+  - "apache 207"
+  - "mero"
+  - "kc rebell"
+  - "summer cem"
+  - "eko fresh"
+  - "elif"
+  # Komedi / tiyatro (Almanya turneleri çok popüler)
+  - "cem yılmaz"
+  - "ata demirer"
+  - "hasan can kaya"
+  - "doğu demirkol"
+  - "tolga çevik"
 
-  # ==========================================================
-  # GÜÇLÜ — 2 puan
-  # ==========================================================
-  guclu:
-    # --- Türk / Türkiye ---
-    - "türk"                    # Türken, türkisch, Türkei
-    - "türkei"
-    - "türkiye"
-    - "turkish"
-    - "erdogan"
-    - "erdoğan"
-    - "anatol"
-    - "osmanisch"
-    - "kurdisch"
-    - "kurden"
-    # --- Göç, din, toplum ---
-    - "migration"
-    - "migrant"
-    - "einwanderung"
-    - "zuwanderung"
-    - "einwanderer"
-    - "geflüchtete"
-    - "flüchtling"
-    - "asyl"
-    - "aufenthalt"
-    - "abschiebung"
-    - "integration"
-    - "ausländer"
-    - "staatsbürgerschaft"
-    - "moschee"
-    - "islam"
-    - "muslim"
-    - "rassis"                  # rassistisch, Rassismus
-    - "diskriminier"
-    - "ramadan"
-    - "ramazan"
-    - "bayram"
-    - "zuckerfest"
-    - "opferfest"
-    - "fastenbrechen"
-    - "iftar"
-    - "=halal"
-    - "=döner"
-    # --- Münih resmi kurumlar ---
-    - "=kvr"
-    - "kreisverwaltungsreferat"
-    - "jobcenter"
-    - "konsulat"
-    - "botschaft"
-    - "stadtrat"
-    # --- Ulaşım, günlük hayat ---
-    - "streik"
-    - "=mvg"
-    - "=mvv"
-    - "s-bahn"
-    - "u-bahn"
-    - "stammstrecke"
-    - "deutschlandticket"
-    - "flughafen münchen"
-    - "schienenersatz"
-    - "unwetter"
-    - "hochwasser"
-    - "sturmwarnung"
-    - "gewitterwarnung"
-    # --- Para, sosyal haklar ---
-    - "bürgergeld"
-    - "kindergeld"
-    - "elterngeld"
-    - "wohngeld"
-    - "mindestlohn"
-    - "krankenkasse"
-    - "krankenversicherung"
-    - "pflegeversicherung"
-    - "mietpreis"
-    - "mietspiegel"
-    - "wohnungsnot"
-    - "sozialhilfe"
-    - "anerkennung"             # Abschluss-/Führerscheinanerkennung
-    # --- Mega mekan / mega etkinlik ---
-    - "olympiahalle"
-    - "olympiastadion"
-    - "olympiapark"
-    - "allianz arena"
-    - "sap garden"
-    - "=zenith"
-    - "muffatwerk"
-    - "backstage"
-    - "circus krone"
-    - "tonhalle"
-    - "kongresshalle"
-    - "königsplatz"
-    - "messe münchen"
-    - "tollwood"
-    - "oktoberfest"
-    - "=wiesn"
-    - "frühlingsfest"
-    - "welttournee"
-    - "ausverkauft"
-    # --- Türk futbolu (Münih'te maç, taraftar buluşması) ---
-    - "galatasaray"
-    - "fenerbah"
-    - "beşiktaş"
-    - "besiktas"
-    - "trabzonspor"
-    - "başakşehir"
-    # --- Türkçe karşılıklar ---
-    - "almanya"
-    - "=alman"
-    - "münih"
-    - "bavyera"
-    - "=vize"
-    - "schengen"
-    - "pasaport"
-    - "avrupa birliği"
-    - "türk hava yolları"
-    - "=thy"
-    - "diaspora"
-    - "=cami"
-    - "=imam"
-    - "konsolos"
-    - "büyükelçi"
-    - "askerlik"
-    - "seçmen"
-    - "=deprem"
-    - "milli takım"
+# ============================================================
+# Türkiye ulusal medyası için DAR liste — sadece devasa olaylar.
+# Buraya sıradan kelime EKLEME ("hükümet", "ekonomi" gibi) —
+# yoksa bot günde yüzlerce alakasız Türkiye haberiyle boğulur.
+# ============================================================
+turkey_major:
+  - "deprem"
+  - "patlama"
+  - "suikast"
+  - "darbe"
+  - "olağanüstü hal"
+  - "seçim"
+  - "milli takım"
+  - "dünya kupası"
+  - "şampiyon oldu"
+  # Almanya'daki Türkleri direkt ilgilendiren konular:
+  - "almanya"
+  - "münih"
+  - "bavyera"
+  - "gurbetçi"
+  - "vize"
+  - "schengen"
+  - "çifte vatandaşlık"
 
-  # ==========================================================
-  # BAĞLAM — 1 puan. Tek başına asla yetmez, ama kesiştiriyor.
-  # ==========================================================
-  baglam:
-    # --- Yer ---
-    - "münchen"
-    - "muenchen"
-    - "=bayern"
-    - "bayerisch"
-    - "=münih"
-    - "nürnberg"
-    - "augsburg"
-    - "ingolstadt"
-    # --- Sahne / etkinlik ---
-    - "konzert"
-    - "konser"
-    - "=tour"
-    - "tournee"
-    - "=turne"
-    - "ticket"
-    - "=bilet"
-    - "bühne"
-    - "veranstaltung"
-    - "festival"
-    - "=show"
-    - "auftritt"
-    - "comedy"
-    - "kabarett"
-    - "theater"
-    - "tiyatro"
-    # --- Aile, eğitim ---
-    - "familie"
-    - "=kinder"
-    - "=schule"
-    - "=kita"
-    - "studium"
-    - "universität"
-    - "ausbildung"
-    - "=azubi"
-    - "öğrenci"
-    - "=okul"
-    - "üniversite"
-    # --- Para ---
-    - "=miete"
-    - "wohnung"
-    - "=steuer"
-    - "=rente"
-    - "arbeitsmarkt"
-    - "arbeitslos"
-    - "=preis"
-    - "erhöhung"
-    - "=kosten"
-    - "=gebühr"
-    - "=ücret"
-    - "=zam"
-    - "=fiyat"
-    # --- Siyaset / hukuk ---
-    - "gesetz"
-    - "bundestag"
-    - "bundesrat"
-    - "bundesregierung"
-    - "koalition"
-    - "minister"
-    - "beschluss"
-    - "verordnung"
-    - "=urteil"
-    - "gericht"
-    - "polizei"
-    - "hükümet"
-    - "=bakan"
-    - "=meclis"
-    - "=yasa"
-    - "=karar"
-    - "düzenleme"
-    # --- Aksaklık ---
-    - "sperrung"
-    - "gesperrt"
-    - "=ausfall"
-    - "entfällt"
-    - "verspätung"
-    - "störung"
-    - "umleitung"
-    # --- Sağlık ---
-    - "gesundheit"
-    - "krankenhaus"
-    - "=klinik"
-    - "=arzt"
-    # --- İşlem / bürokrasi ---
-    - "=termin"
-    - "=antrag"
-    - "formular"
-    - "=frist"
-    - "randevu"
-    - "başvuru"
-    - "=belge"
-    # --- Türkiye şehirleri ---
-    - "istanbul"
-    - "=ankara"
-    - "=izmir"
-    - "uçuş"
-    - "havalimanı"
+# ============================================================
+# Almanya ULUSAL medyası (Tagesschau vb.) için liste:
+# Türk/Türkiye bağlantısı VEYA Münih geçen her haber gönderilir.
+# ============================================================
+germany_national:
+  - "türk"
+  - "türkisch"
+  - "türkischstämmig"
+  - "türkei"
+  - "türkiye"
+  - "erdoğan"
+  - "erdogan"
+  - "münchen"
+  - "doppelpass"
+  - "doppelte staatsbürgerschaft"
+  - "staatsbürgerschaft"
+  - "einbürgerung"
+  - "moschee"
+  - "ditib"
 
-  # ==========================================================
-  # NEGATİF — 3 puan düşürür. Kısa ve net tutuldu;
-  # şüpheli kelime buraya KONMAZ, gerçek haberi öldürür.
-  # ==========================================================
-  negatif:
-    - "bundesliga"
-    - "transfermarkt"
-    - "spieltag"
-    - "tabellenführer"
-    - "=horoskop"
-    - "sternzeichen"
-    - "gewinnspiel"
-    - "advertorial"
-    - "sponsored"
-    - "=werbung"
-    - "=anzeige"
-    - "=rezept"
-    - "=burç"
-    - "astroloji"
-    - "=magazin"
-    - "dedikodu"
-    - "teknik direktör"
-    - "=forma"
-    - "=kadro"
-    - "=şampiyonlar ligi kura"
-
-# ------------------------------------------------------------
-# GRUPLARA ÖZEL AYAR
-# Her kaynak sources.yml'de bir gruba bağlı. Grup:
-#   esik    -> o grup için aday eşiği (varsayılan 3)
-#   kesin / guclu / baglam / negatif -> ortağa EKLENİR
-# ------------------------------------------------------------
-gruplar:
-
-  # Münih yerel basını.
-  # Eşik 5, çünkü başlıkta geçen tek "güçlü" kelime 4 puan eder —
-  # yani "Türkei" geçen her haber tek başına geçmesin, ikinci bir
-  # sinyal (München, Konsulat, Einbürgerung…) gerekiyor.
-  yerel:
-    esik: 5
-
-  # Alman ulusal medyası: Münih'ten uzak, eşik biraz yüksek
-  almanya_ulusal:
-    esik: 4
-
-  # Bundesregierung / Bundestag / bakanlıklar.
-  # Ölçüt "Türkiye ile ilgili mi" DEĞİL, "buradaki hayatı değiştirir mi".
-  bund:
-    esik: 3
-    kesin:
-      - "staatsangehörigkeit"
-      - "migrationspaket"
-      - "zuwanderungsgesetz"
-      - "rückführung"
-      - "arbeitsmigration"
-    guclu:
-      - "gesetzentwurf"
-      - "kabinett"
-      - "inkrafttreten"
-      - "reform"
-      - "erhöht sich"
-      - "entlastung"
-
-  # Türkiye ulusal medyası: her haber Türkiye ile ilgili,
-  # o yüzden "türk/türkiye" burada puan getirmez, eşik yüksek.
-  turkiye_medya:
-    esik: 5
-    kesin:
-      - "almanya'da yaşayan"
-      - "gurbetçilere"
-      - "vize muafiyeti"
-      - "vize krizi"
-      - "schengen vizesi"
-      - "yurt dışında yaşayan"
-      - "avrupa'daki türkler"
-      # Tarihi çapta olaylar tek başına yeter
-      - "büyük deprem"
-      - "şiddetli deprem"
-      - "büyüklüğünde deprem"
-      - "deprem meydana"
-      - "=darbe"
-      - "olağanüstü hal"
-      - "orman yangın"
-      - "sel felaket"
-      - "milli yas"
-    guclu:
-      - "=seçim"
-      - "referandum"
-      - "dünya kupası"
-      - "avrupa şampiyon"
-      - "milli takım"
-    negatif:
-      - "=maç"
-      - "süper lig"
-      - "=dizi"
-      - "=oyuncu"
-      - "sosyal medya"
-
-  # DW Türkçe, Euronews TR: Alman gündemini Türkçe veriyor.
-  # En değerli kaynak, eşik düşük.
-  diaspora:
-    esik: 2
-    kesin:
-      - "almanya'da"
-      - "münih'te"
-      - "gurbetçi"
-
-  # MVG API: sadece canı yakan olaylar
-  mvg:
-    esik: 2
-    kesin:
-      - "gesperrt"
-      - "unterbrech"
-      - "=streik"
-      - "evakuier"
-      - "polizeieinsatz"
-      - "schienenersatz"
-    negatif:
-      - "fahrplanwechsel"
-      - "haltestelle verlegt"
-
-  # Etkinlik platformları (Avrupa geneli) — şehir filtresi şart
-  etkinlik_avrupa:
-    esik: 2
-    # KAPI: gidilebilir bir şehir geçmiyorsa puanı ne olursa olsun elenir.
-    # "Berlin'de Tarkan konseri" Münih'li için haber değil.
-    zorunlu:
-      - "münchen"
-      - "muenchen"
-      - "münih"
-      - "nürnberg"
-      - "augsburg"
-      - "ingolstadt"
-      - "regensburg"
-      - "stuttgart"
-      - "salzburg"
-
-  # Alman mekan sayfaları: Türkçe etkinlik sinyali aranır
-  mekan:
-    esik: 1
-    # KAPI: Alman mekan sayfasındaki her konser değil, sadece Türkçe
-    # sinyali olan. Sanatçı listesi bu kapıya otomatik eklenir.
-    zorunlu:
-      - "türk"
-      - "turkish"
-      - "anadolu"
-      - "istanbul"
-      - "arabesk"
-      - "oryantal"
-      - "=gecesi"
-
-  # Münih Türk dernek / cami siteleri: zaten bize göre,
-  # sadece "yeni duyuru var mı" bakılır
-  dernek:
-    esik: 1
-    kesin:
-      - "veranstaltung"
-      - "etkinlik"
-      - "duyuru"
-      - "=termin"
-      - "programm"
-      - "=program"
-      - "iftar"
-      - "kermes"
-      - "konser"
-      - "seminer"
+# ============================================================
+# "Gidilebilir mesafe" şehir filtresi — Event Türk gibi tüm
+# Avrupa'yı listeleyen kaynaklar için. Listeye şehir ekleyip
+# çıkararak kapsama alanını kendin ayarlarsın.
+# ============================================================
+bavaria_reach:
+  - "münchen"
+  - "muenchen"
+  - "munchen"
+  - "münih"
+  - "nürnberg"
+  - "nuernberg"
+  - "nurnberg"
+  - "augsburg"
+  - "ingolstadt"
+  - "regensburg"
+  - "ulm"
+  - "stuttgart"
+  - "salzburg"
+  - "bayern"

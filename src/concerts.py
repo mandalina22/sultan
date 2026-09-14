@@ -43,15 +43,6 @@ MEGA_VENUES = (
 CITY_WORDS = ("münchen", "munich", "muenchen", "nürnberg", "nuremberg", "nuernberg")
 REGION_WORDS = ("bavaria", "bayern")
 
-# Sanatçı listesinde OLMAYAN Türkçe etkinlikleri de yakalamak için.
-# Liste hiçbir zaman tam olamaz; bu kelimeler ağın ikinci katmanı.
-TURKISH_EVENT_WORDS = (
-    "türk", "turkish", "türkiye", "anadolu", "anatolian", "istanbul",
-    "ankara", "izmir", "arabesk", "oryantal", "orientalisch",
-    "ramazan", "ramadan", "bayram", "gecesi", "konseri", "türkü",
-    "halay", "meyhane", "kurdisch", "kurdish", "balkan",
-)
-
 
 # ---------------------------------------------------------------- Ticketmaster
 def fetch_ticketmaster(artists: list[str]) -> list[dict]:
@@ -102,9 +93,8 @@ def fetch_ticketmaster(artists: list[str]) -> list[dict]:
                 haystack = f"{name} {attractions}".lower()
 
                 artist_hit = any(a in haystack for a in artist_lows)
-                turkish_hit = any(w in haystack for w in TURKISH_EVENT_WORDS)
                 mega_hit = any(v in venue_name.lower() for v in MEGA_VENUES)
-                if not (artist_hit or turkish_hit or mega_hit):
+                if not (artist_hit or mega_hit):
                     continue
 
                 seen_ids.add(ev_id)
@@ -114,10 +104,8 @@ def fetch_ticketmaster(artists: list[str]) -> list[dict]:
                     "title": f"KONSER: {name} — {venue_name}, {city} ({date})",
                     "summary": f"{name} · {venue_name} · {city} · {date}",
                     "link": ev.get("url") or f"tm://{ev_id}",
-                    # Sanatçımız veya Türkçe etkinlikse filtresiz geçer;
-                    # sadece "mega mekan" ise kelime filtresine tabi.
-                    "trusted": artist_hit or turkish_hit,
-                    "keyword_list": "mekan",
+                    "trusted": artist_hit,   # sanatçımızsa filtresiz geçer
+                    "keyword_list": "default",
                 })
 
             total = data.get("page", {}).get("totalPages", 1)
@@ -141,7 +129,7 @@ def _bt_one(artist: str) -> tuple[str, list[dict], bool]:
     try:
         resp = requests.get(
             f"https://rest.bandsintown.com/artists/{quote(artist)}/events",
-            params={"app_id": os.environ["BANDSINTOWN_APP_ID"], "date": "upcoming"},
+            params={"app_id": "bizim_munih", "date": "upcoming"},
             headers=HEADERS, timeout=15,
         )
         if resp.status_code != 200:
@@ -163,7 +151,7 @@ def _bt_one(artist: str) -> tuple[str, list[dict], bool]:
                 "summary": f"{artist} konseri · {venue.get('city', '')} · {date}",
                 "link": ev.get("url") or f"bt://{artist}/{date}",
                 "trusted": True,
-                "keyword_list": "mekan",
+                "keyword_list": "default",
             })
         return artist, found, True
     except Exception as e:
@@ -172,14 +160,8 @@ def _bt_one(artist: str) -> tuple[str, list[dict], bool]:
 
 
 def fetch_bandsintown(artists: list[str]) -> list[dict]:
-    # Bandsintown API kullanım şartları kayıtlı bir app_id ister
-    # (artists.bandsintown.com/support -> ücretsiz). Anahtarsız kullanmak
-    # şartlara aykırı; o yüzden yoksa bu hat kapalı kalır.
-    if not os.environ.get("BANDSINTOWN_APP_ID"):
-        print("[KONSER] Bandsintown ATLANDI — BANDSINTOWN_APP_ID secret'ı yok")
-        return []
     items, with_page = [], 0
-    with ThreadPoolExecutor(max_workers=4) as ex:
+    with ThreadPoolExecutor(max_workers=8) as ex:
         for artist, found, has_page in ex.map(_bt_one, artists):
             items.extend(found)
             with_page += int(has_page)
