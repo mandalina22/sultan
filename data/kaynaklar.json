@@ -1,0 +1,87 @@
+{
+ "Olympiapark Veranstaltungen": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 404 Client Error: Page not found for url: https://www.olympiapark.de/de/veranstaltungen-tickets/veranst"
+ },
+ "Vasistdas etkinlik takvimi": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Backstage München": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "Alte Kongresshalle": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 404 Client Error: Not Found for url: https://altekongresshalle.de/veranstaltungen/"
+ },
+ "Event Türk (liste)": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "10 item"
+ },
+ "DITIB Bayern": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: ConnectionError: HTTPSConnectionPool(host='www.ditib-bayern.de', port=443): Max retries exceeded with url: / (Caus"
+ },
+ "EvenTurk Almanya": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "21 item"
+ },
+ "Turkfest": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: ConnectTimeout: HTTPSConnectionPool(host='www.turkfest.de', port=443): Max retries exceeded with url: /event/ (Cau"
+ },
+ "Tonhalle München": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: SSLError: HTTPSConnectionPool(host='www.tonhalle-muenchen.de', port=443): Max retries exceeded with url: /programm"
+ },
+ "Event Türk (RSS)": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "Löwenbräukeller": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: SSLError: HTTPSConnectionPool(host='www.loewenbraeukeller.com', port=443): Max retries exceeded with url: /veranst"
+ },
+ "Zenith / Motorworld": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: SSLError: HTTPSConnectionPool(host='www.motorworld-muenchen.de', port=443): Max retries exceeded with url: /verans"
+ },
+ "München Ticket": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "13 item"
+ },
+ "MEB Münih Eğitim Ataşeliği": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "22 item"
+ },
+ "Muffatwerk": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "14 item"
+ },
+ "Circus Krone": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: SSLError: HTTPSConnectionPool(host='www.circus-krone.de', port=443): Max retries exceeded with url: /veranstaltung"
+ },
+ "Türkische Gemeinde in Bayern": {
+  "ilk_tur": true,
+  "bos": 1,
+  "son_durum": "HATA: ConnectionError: HTTPSConnectionPool(host='www.tgb-bayern.de', port=443): Max retries exceeded with url: / (Caused"
+ }
+}
