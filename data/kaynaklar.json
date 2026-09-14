@@ -2,5 +2,129 @@
  "Event Türk (RSS)": {
   "bos": 2,
   "son_durum": "HATA: 0 item döndü"
+ },
+ "Bundestag Inneres": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "Rathaus Umschau": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "23 item"
+ },
+ "T.C. Münih Başkonsolosluğu": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "8 item"
+ },
+ "Bundestag Arbeit und Soziales": {
+  "ilk_tur": true,
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "Merkur München": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Merkur Bayern": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "tz München": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Süddeutsche München": {
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "Abendzeitung München": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Abendzeitung Bayern": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Abendzeitung Kultur": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "BR24": {
+  "bos": 0,
+  "son_durum": "10 item"
+ },
+ "Bundespolizei München": {
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "MVG Betriebsmeldungen (API)": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "NINA uyarılar — München Stadt (API)": {
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "NINA uyarılar — Landkreis München (API)": {
+  "bos": 1,
+  "son_durum": "HATA: 0 item döndü"
+ },
+ "Tagesschau (tümü)": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Tagesschau Inland": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Tagesschau Ausland": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Bundesregierung Pressemitteilungen": {
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "Bundesregierung Artikel": {
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "Bundestag Kurzmeldungen (hib)": {
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "BAMF Meldungen": {
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "BAMF Pressemitteilungen": {
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "TRT Haber Son Dakika": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "NTV Gündem": {
+  "bos": 0,
+  "son_durum": "20 item"
+ },
+ "Hürriyet Anasayfa": {
+  "bos": 0,
+  "son_durum": "40 item"
+ },
+ "Anadolu Ajansı Güncel": {
+  "bos": 0,
+  "son_durum": "30 item"
+ },
+ "DW Türkçe": {
+  "bos": 0,
+  "son_durum": "15 item"
+ },
+ "Euronews Türkçe": {
+  "bos": 0,
+  "son_durum": "40 item"
  }
 }
