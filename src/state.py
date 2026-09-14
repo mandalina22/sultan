@@ -1,31 +1,38 @@
-"""Görülen içeriklerin kaydı (dedup).
+"""Görülen içeriklerin kaydı (dedup) + kaynak sağlık geçmişi.
 
-Aynı haberi her taramada tekrar göndermemek için link hash'lerini
-data/seen.json'da SIRALI liste olarak tutuyoruz — böylece dosya
-dolduğunda en ESKİ kayıtlar atılır (rastgele değil) ve hâlâ feed'de
-duran güncel içerikler yanlışlıkla "görülmemiş" sayılmaz.
+data/seen.json  -> gönderilmiş/değerlendirilmiş link hash'leri, SIRALI.
+                   Sıralı olduğu için dosya dolunca en ESKİ kayıtlar atılır.
+data/health.json-> her kaynağın üst üste kaç turdur 0 item verdiği.
+                   Bir kaynak sessizce ölürse bot bunu fark edip haber verir.
 """
 
 import hashlib
 import json
 from pathlib import Path
 
-STATE_FILE = Path("data/seen.json")
-MAX_ENTRIES = 5000  # dosya sonsuza kadar büyümesin
+DATA_DIR = Path("data")
+STATE_FILE = DATA_DIR / "seen.json"
+HEALTH_FILE = DATA_DIR / "health.json"
+MAX_ENTRIES = 8000
+DEAD_AFTER = 6  # bu kadar tur üst üste boş dönen kaynak "ölü" sayılır
 
 
 def item_id(item: dict) -> str:
     return hashlib.sha256(item["link"].encode()).hexdigest()[:16]
 
 
+# ------------------------------------------------------------------- seen
 def load() -> list[str]:
     if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())
+        try:
+            return json.loads(STATE_FILE.read_text())
+        except json.JSONDecodeError:
+            print("[STATE] seen.json bozuk, sıfırdan başlanıyor")
     return []
 
 
 def save(seen: list[str]) -> None:
-    STATE_FILE.parent.mkdir(exist_ok=True)
+    DATA_DIR.mkdir(exist_ok=True)
     STATE_FILE.write_text(json.dumps(seen[-MAX_ENTRIES:], indent=0))
 
 
@@ -43,3 +50,26 @@ def mark_seen(seen: list[str], items: list[dict]) -> None:
         if iid not in known:
             seen.append(iid)
             known.add(iid)
+
+
+# ----------------------------------------------------------------- health
+def update_health(health: list[tuple[str, str]]) -> list[str]:
+    """Kaynak sağlığını günceller ve YENİ ölen kaynakların adını döner."""
+    try:
+        counters = json.loads(HEALTH_FILE.read_text())
+    except (OSError, json.JSONDecodeError):
+        counters = {}
+
+    newly_dead = []
+    for name, status in health:
+        if status == "kapalı":
+            continue
+        ok = not status.startswith("HATA")
+        before = counters.get(name, 0)
+        counters[name] = 0 if ok else before + 1
+        if counters[name] == DEAD_AFTER:
+            newly_dead.append(f"{name} — {status}")
+
+    DATA_DIR.mkdir(exist_ok=True)
+    HEALTH_FILE.write_text(json.dumps(counters, indent=1, ensure_ascii=False))
+    return newly_dead

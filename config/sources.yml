@@ -1,23 +1,31 @@
 # ============================================================
 # KAYNAK LİSTESİ
 # ------------------------------------------------------------
-# type: rss   -> feedparser ile okunur
-# type: html  -> requests + BeautifulSoup ile okunur
+# type: rss   -> requests ile indirilip feedparser ile okunur
+# type: html  -> requests + BeautifulSoup, link toplayıcı
+# type: json  -> resmi JSON API; "parser" alanı hangi API olduğunu söyler
 #
-# trusted: true        -> prefilter atlanır, her yeni içerik LLM'e gider
-# keyword_list: <isim> -> hangi kelime grubuyla filtreleneceği
-#                         (varsayılan: "default", Türk ulusal medya
-#                          için: "turkey_major")
+# trusted: true        -> kelime filtresi atlanır, her yeni içerik LLM'e gider
+# direct: true         -> kelime filtresi DE LLM DE atlanır, olduğu gibi gider
+#                         (zaten Türkçe ve resmi kaynaklar — API tasarrufu)
+# keyword_list: <isim> -> config/keywords.yml içindeki hangi grupla
+#                         filtreleneceği (varsayılan: "default")
+# url_fallback: [...]  -> ana URL ölürse sırayla denenir (kendi kendini onarma)
+# scan: news|events    -> hangi taramada çalışacağı
+#                         news   = saatte bir (varsayılan)
+#                         events = günde iki kez (10:00 / 18:00), etkinlik
 #
-# Kurulumdan sonra şunu çalıştırıp 0 item dönen kaynakları düzelt:
-#   python -m src.main --test-sources
+# Ölü kaynağı bulmak için:  python -m src.main --test-sources
 # ============================================================
 
 sources:
-  # ================= MÜNİH / BAVYERA MEDYASI =================
+  # ==========================================================
+  # 1) MÜNİH / BAVYERA YEREL BASINI
+  # ==========================================================
   - name: "Merkur München"
     type: rss
     url: "https://www.merkur.de/lokales/muenchen/rssfeed.rdf"
+    url_fallback: ["https://www.merkur.de/lokales/muenchen/rss"]
 
   - name: "Merkur Bayern"
     type: rss
@@ -40,7 +48,6 @@ sources:
     url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/bayern-abendzeitung.xml"
 
   - name: "Abendzeitung Kultur"
-    # Konser ve etkinlik duyuruları için değerli
     type: rss
     url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/kultur-news-abendzeitung.xml"
 
@@ -48,18 +55,106 @@ sources:
     type: rss
     url: "https://www.br.de/nachrichten/meldungen/nachrichten-bayerischer-rundfunk100~newsRss.xml"
 
-  # ================= ALMANYA ULUSAL MEDYASI ==================
-  - name: "Tagesschau"
-    # Türk/Türkiye bağlantılı VEYA Münih geçen her ulusal haber gönderilir
+  - name: "Münchner Wochenanzeiger"
+    type: rss
+    url: "https://www.wochenanzeiger-muenchen.de/rss/muenchen.xml"
+    url_fallback: ["https://www.wochenanzeiger-muenchen.de/rss"]
+
+  # ==========================================================
+  # 2) MÜNİH RESMİ / ŞEHİR YÖNETİMİ
+  # ==========================================================
+  - name: "Rathaus Umschau (resmi basın bülteni)"
+    # Şehrin resmi günlük bülteni. Stadtrat kararları, KVR duyuruları,
+    # yeni yönetmelikler önce burada çıkar.
+    type: html
+    url: "https://ru.muenchen.de/"
+    item_selector: "a"
+    link_must_contain: "/20"
+    min_text_len: 25
+
+  - name: "Stadt München Aktuelles"
+    type: html
+    url: "https://stadt.muenchen.de/news.html"
+    url_fallback: ["https://stadt.muenchen.de/infos/aktuelle-meldungen.html"]
+    item_selector: "a"
+    min_text_len: 25
+
+  - name: "MVG Betriebsmeldungen (API)"
+    # Resmi JSON API, anahtarsız. Grev/arıza/hat kapanması buradan gelir.
+    type: json
+    parser: mvg
+    url: "https://www.mvg.de/api/bgw-pt/v3/messages"
+    keyword_list: mvg_relevant
+
+  - name: "NINA resmi uyarılar (API)"
+    # Bundesamt für Bevölkerungsschutz — DWD hava uyarıları + afet/güvenlik.
+    # ARS 091620000000 = München Stadt. İlçe için 091840000000 (Landkreis).
+    # Cevap içinde Türkçe çeviri de geliyor.
+    type: json
+    parser: nina
+    url: "https://warnung.bund.de/api31/dashboard/091620000000.json"
+    direct: true
+
+  - name: "NINA uyarılar Landkreis München (API)"
+    type: json
+    parser: nina
+    url: "https://warnung.bund.de/api31/dashboard/091840000000.json"
+    direct: true
+
+  # ==========================================================
+  # 3) ALMANYA FEDERAL — "burada yaşayanı etkileyen" hattı
+  # ==========================================================
+  - name: "Tagesschau (tümü)"
     type: rss
     url: "https://www.tagesschau.de/infoservices/alle-meldungen-100~rss2.xml"
+    url_fallback: ["https://www.tagesschau.de/index~rss2.xml"]
     keyword_list: germany_national
 
-  # ================= TÜRKİYE ULUSAL MEDYASI ==================
-  # DİKKAT: Bu kaynaklar dar "turkey_major" listesiyle filtrelenir.
-  # Sadece deprem/seçim/milli takım gibi büyük olaylar ve
-  # Almanya/gurbetçi/vize içeren haberler geçer.
+  - name: "Tagesschau Inland"
+    type: rss
+    url: "https://www.tagesschau.de/inland/index~rss2.xml"
+    keyword_list: germany_national
 
+  - name: "Bundesregierung Pressemitteilungen"
+    type: rss
+    url: "https://www.bundesregierung.de/service/rss/breg-de/1151244/feed.xml"
+    keyword_list: bund_relevant
+
+  - name: "Bundesregierung Artikel"
+    type: rss
+    url: "https://www.bundesregierung.de/service/rss/breg-de/1151246/feed.xml"
+    keyword_list: bund_relevant
+
+  - name: "Bundestag Kurzmeldungen (hib)"
+    type: rss
+    url: "https://www.bundestag.de/static/appdata/includes/rss/hib.rss"
+    keyword_list: bund_relevant
+
+  - name: "Bundestag Inneres"
+    type: rss
+    url: "https://www.bundestag.de/static/appdata/includes/rss/inneres.rss"
+    keyword_list: bund_relevant
+
+  - name: "Bundestag Arbeit und Soziales"
+    type: rss
+    url: "https://www.bundestag.de/static/appdata/includes/rss/arbeitsoziales.rss"
+    keyword_list: bund_relevant
+
+  - name: "BAMF Meldungen"
+    # Göç, vatandaşlık, entegrasyon kursları — hedef kitleyi en doğrudan
+    # ilgilendiren federal kurum. Filtresiz geçer.
+    type: rss
+    url: "https://www.bamf.de/SiteGlobals/Functions/RSS/DE/Feed/RSSNewsfeed_Meldungen.xml?nn=282672"
+    trusted: true
+
+  - name: "BAMF Pressemitteilungen"
+    type: rss
+    url: "https://www.bamf.de/SiteGlobals/Functions/RSS/DE/Feed/RSSNewsfeed_Pressemitteilungen.xml?nn=282672"
+    trusted: true
+
+  # ==========================================================
+  # 4) TÜRKİYE ULUSAL MEDYASI — dar filtre
+  # ==========================================================
   - name: "TRT Haber Son Dakika"
     type: rss
     url: "https://www.trthaber.com/sondakika.rss"
@@ -75,50 +170,155 @@ sources:
     url: "https://www.hurriyet.com.tr/rss/anasayfa"
     keyword_list: turkey_major
 
-  # ================= RESMİ / KONSOLOSLUK =====================
-  - name: "T.C. Münih Başkonsolosluğu Duyurular"
+  - name: "Anadolu Ajansı Güncel"
+    type: rss
+    url: "https://www.aa.com.tr/tr/rss/default?cat=guncel"
+    keyword_list: turkey_major
+
+  - name: "DW Türkçe"
+    # Alman gündemini TÜRKÇE veriyor — hedef kitle için en değerli kaynak.
+    # Almanya haberleri zaten çevrilmiş geliyor, doğrudan story malzemesi.
+    type: rss
+    url: "https://rss.dw.com/rdf/rss-tur-all"
+    url_fallback: ["https://rss.dw.com/xml/rss-tur-all"]
+    keyword_list: diaspora
+
+  - name: "Euronews Türkçe"
+    type: rss
+    url: "https://tr.euronews.com/rss"
+    keyword_list: diaspora
+
+  # ==========================================================
+  # 5) TÜRK RESMİ KURUMLARI
+  # ==========================================================
+  - name: "T.C. Münih Başkonsolosluğu"
     type: html
     url: "https://munih-bk.mfa.gov.tr/Mission"
-    trusted: true
+    direct: true
     item_selector: "a"
     link_must_contain: "showannouncement"
 
-  # ================= ETKİNLİK / KONSER =======================
-  # Venue sayfalarının resmi RSS'i yok; HTML taraması için her sitenin
-  # kendi selector'u ayarlanmalı. Şablonlar aşağıda kapalı duruyor —
-  # açmak istersen selector'u siteye göre ayarlamak gerekiyor,
-  # bunu birlikte yaparız.
-  - name: "Muffatwerk Events"
+  - name: "T.C. Dışişleri Bakanlığı Duyurular"
     type: html
-    url: "https://muffatwerk.de/de/events"
+    url: "https://www.mfa.gov.tr/duyurular.tr.mfa"
     item_selector: "a"
-    enabled: false
+    link_must_contain: "duyuru"
+    keyword_list: diaspora
 
-  - name: "Backstage München"
+  - name: "T.C. Berlin Büyükelçiliği"
     type: html
-    url: "https://backstage.eu/veranstaltungen/live.html"
+    url: "https://berlin.be.mfa.gov.tr/Mission"
     item_selector: "a"
-    enabled: false
+    link_must_contain: "showannouncement"
+    keyword_list: diaspora
 
-  - name: "Olympiapark Events"
+  - name: "YTB (Yurtdışı Türkler)"
     type: html
-    url: "https://www.olympiapark.de/de/veranstaltungen-tickets/veranstaltungen"
+    url: "https://www.ytb.gov.tr/haberler"
     item_selector: "a"
-    enabled: false
+    link_must_contain: "/haberler/"
+    keyword_list: diaspora
 
-  # ============ TÜRK DİASPORA ETKİNLİK PLATFORMU ============
-  # eventturk.de: Avrupa'daki Türkçe konser/tiyatro/stand-up kataloğu.
-  # Tüm kıtayı listelediği için "gidilebilir şehir" filtresi uygulanır
-  # (bavaria_reach listesi) — Berlin konseri elenir, Münih/Stuttgart geçer.
+  # ==========================================================
+  # 6) ETKİNLİK / KONSER — günde bir taranır (scan: events)
+  # ------------------------------------------------------------
+  # Amaç: Münih ve çevresindeki HER Türkçe etkinliği yakalamak.
+  # Mekan sayfaları kaba link taramasıyla geçiliyor; gürültüyü
+  # LLM eliyor. Bir mekanın sitesi değişirse --test-sources söyler.
+  # ==========================================================
   - name: "Event Türk (RSS)"
     type: rss
     url: "https://eventturk.de/feed/"
     keyword_list: bavaria_reach
+    scan: events
 
   - name: "Event Türk (liste)"
-    # RSS bir gün kapanırsa yedek: etkinlik listesinin HTML taraması
     type: html
     url: "https://eventturk.de/etkinlik/"
     item_selector: "a"
     link_must_contain: "/etkinlik/"
     keyword_list: bavaria_reach
+    scan: events
+
+  - name: "Muffatwerk"
+    type: html
+    url: "https://www.muffatwerk.de/de/events"
+    url_fallback: ["https://muffatwerk.de/de/events"]
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Backstage München"
+    type: html
+    url: "https://backstage.eu/veranstaltungen/live.html"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Olympiapark Veranstaltungen"
+    type: html
+    url: "https://www.olympiapark.de/de/veranstaltungen-tickets/veranstaltungen/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Zenith / Motorworld"
+    type: html
+    url: "https://www.motorworld-muenchen.de/veranstaltungen/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Circus Krone"
+    type: html
+    url: "https://www.circus-krone.de/veranstaltungen/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Tonhalle München"
+    type: html
+    url: "https://www.tonhalle-muenchen.de/programm/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Alte Kongresshalle"
+    type: html
+    url: "https://altekongresshalle.de/veranstaltungen/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "Löwenbräukeller"
+    type: html
+    url: "https://www.loewenbraeukeller.com/veranstaltungen/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  - name: "München Ticket"
+    type: html
+    url: "https://www.muenchenticket.de/"
+    item_selector: "a"
+    keyword_list: event_turkish
+    scan: events
+
+  # ==========================================================
+  # 7) MÜNİH TÜRK TOPLUM KURUMLARI
+  # ==========================================================
+  - name: "DITIB Bayern"
+    type: html
+    url: "https://www.ditib-bayern.de/"
+    item_selector: "a"
+    min_text_len: 20
+    keyword_list: community
+    scan: events
+
+  - name: "Türkische Gemeinde in Bayern"
+    type: html
+    url: "https://www.tgb-bayern.de/"
+    item_selector: "a"
+    min_text_len: 20
+    keyword_list: community
+    scan: events
