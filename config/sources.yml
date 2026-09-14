@@ -1,0 +1,219 @@
+# ============================================================
+# KAYNAK LİSTESİ
+# ------------------------------------------------------------
+# type: rss   -> requests ile indirilip feedparser ile okunur
+# type: html  -> requests + BeautifulSoup, link toplayıcı
+# type: json  -> resmi JSON API; "parser" hangi API olduğunu söyler
+#
+# grup: <isim>      -> config/keywords.yml içindeki puanlama grubu
+#                      (yerel / almanya_ulusal / bund / turkiye_medya /
+#                       diaspora / mvg / etkinlik_avrupa / mekan / dernek)
+# trusted: true     -> puanlama atlanır, her yeni içerik aday olur
+# direct: true      -> aynısı + mesajda "resmi duyuru" diye etiketlenir
+# otorite: N        -> bu kaynaktan gelen her içeriğe N puan eklenir.
+#                      Güvenilir ve seçici yayın yapan kaynaklar için
+#                      (Tagesschau, Bundesregierung). Kelimenin ağırlığı
+#                      kadar KAYNAĞIN ağırlığı da önemli.
+# url_fallback      -> ana URL ölürse sırayla denenir
+# scan: news|events -> news saatte bir, events günde iki kez
+#
+# Üst üste 3 tur hata veren kaynak otomatik devre dışı kalır ve
+# bir kez Telegram'a bildirilir. --test-sources hepsini tekrar dener.
+# ============================================================
+
+sources:
+  # ==========================================================
+  # 1) MÜNİH / BAVYERA YEREL BASINI
+  # ==========================================================
+  - name: "Merkur München"
+    type: rss
+    grup: yerel
+    url: "https://www.merkur.de/lokales/muenchen/rssfeed.rdf"
+    url_fallback: ["https://www.merkur.de/lokales/muenchen/rss"]
+
+  - name: "Merkur Bayern"
+    type: rss
+    grup: yerel
+    url: "https://www.merkur.de/bayern/rssfeed.rdf"
+
+  - name: "tz München"
+    type: rss
+    grup: yerel
+    url: "https://www.tz.de/muenchen/rssfeed.rdf"
+
+  - name: "Süddeutsche München"
+    type: rss
+    grup: yerel
+    url: "https://rss.sueddeutsche.de/rss/Muenchen"
+
+  - name: "Abendzeitung München"
+    type: rss
+    grup: yerel
+    url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/muenchen-news-abendzeitung.xml"
+
+  - name: "Abendzeitung Bayern"
+    type: rss
+    grup: yerel
+    url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/bayern-abendzeitung.xml"
+
+  - name: "Abendzeitung Kultur"
+    type: rss
+    grup: yerel
+    url: "https://www.abendzeitung-muenchen.de/storage/rss/rss/kultur-news-abendzeitung.xml"
+
+  - name: "BR24"
+    type: rss
+    grup: yerel
+    url: "https://www.br.de/nachrichten/meldungen/nachrichten-bayerischer-rundfunk100~newsRss.xml"
+
+  - name: "Bundespolizei München"
+    # Havalimanı, tren istasyonları, sınır — doğrulandı
+    type: rss
+    grup: yerel
+    url: "https://www.presseportal.de/rss/dienststelle_64017.rss2"
+
+  # ==========================================================
+  # 2) MÜNİH RESMİ / ŞEHİR YÖNETİMİ
+  # ==========================================================
+  - name: "Rathaus Umschau"
+    # Şehrin resmi günlük bülteni: Stadtrat kararları, KVR duyuruları
+    type: html
+    grup: yerel
+    url: "https://ru.muenchen.de/"
+    item_selector: "a"
+    link_must_contain: "/20"
+    min_text_len: 25
+
+  - name: "MVG Betriebsmeldungen (API)"
+    # Resmi JSON API, anahtarsız — doğrulandı
+    type: json
+    parser: mvg
+    grup: mvg
+    url: "https://www.mvg.de/api/bgw-pt/v3/messages"
+
+  - name: "NINA uyarılar — München Stadt (API)"
+    # Bundesamt für Bevölkerungsschutz, Türkçe çeviri de geliyor — doğrulandı
+    type: json
+    parser: nina
+    grup: mvg
+    url: "https://warnung.bund.de/api31/dashboard/091620000000.json"
+    direct: true
+
+  - name: "NINA uyarılar — Landkreis München (API)"
+    type: json
+    parser: nina
+    grup: mvg
+    url: "https://warnung.bund.de/api31/dashboard/091840000000.json"
+    direct: true
+
+  # ==========================================================
+  # 3) ALMANYA FEDERAL — "burada yaşayanı etkileyen" hattı
+  # ==========================================================
+  - name: "Tagesschau (tümü)"
+    type: rss
+    grup: almanya_ulusal
+    otorite: 2
+    url: "https://www.tagesschau.de/infoservices/alle-meldungen-100~rss2.xml"
+    url_fallback: ["https://www.tagesschau.de/index~rss2.xml"]
+
+  - name: "Tagesschau Inland"
+    type: rss
+    grup: almanya_ulusal
+    otorite: 2
+    url: "https://www.tagesschau.de/inland/index~rss2.xml"
+
+  - name: "Tagesschau Ausland"
+    # Türkiye haberleri burada çıkar
+    type: rss
+    grup: almanya_ulusal
+    otorite: 2
+    url: "https://www.tagesschau.de/ausland/index~rss2.xml"
+
+  - name: "Bundesregierung Pressemitteilungen"
+    otorite: 2
+    # Doğrulandı
+    type: rss
+    grup: bund
+    url: "https://www.bundesregierung.de/service/rss/breg-de/1151244/feed.xml"
+
+  - name: "Bundesregierung Artikel"
+    otorite: 2
+    type: rss
+    grup: bund
+    url: "https://www.bundesregierung.de/service/rss/breg-de/1151246/feed.xml"
+
+  - name: "Bundestag Kurzmeldungen (hib)"
+    otorite: 2
+    # Doğrulandı
+    type: rss
+    grup: bund
+    url: "https://www.bundestag.de/static/appdata/includes/rss/hib.rss"
+
+  - name: "Bundestag Inneres"
+    type: rss
+    grup: bund
+    url: "https://www.bundestag.de/static/appdata/includes/rss/inneres.rss"
+
+  - name: "Bundestag Arbeit und Soziales"
+    type: rss
+    grup: bund
+    url: "https://www.bundestag.de/static/appdata/includes/rss/arbeitsoziales.rss"
+
+  - name: "BAMF Meldungen"
+    # Göç, vatandaşlık, entegrasyon kursları — doğrulandı, filtresiz geçer
+    type: rss
+    grup: bund
+    url: "https://www.bamf.de/SiteGlobals/Functions/RSS/DE/Feed/RSSNewsfeed_Meldungen.xml?nn=282672"
+    trusted: true
+
+  - name: "BAMF Pressemitteilungen"
+    type: rss
+    grup: bund
+    url: "https://www.bamf.de/SiteGlobals/Functions/RSS/DE/Feed/RSSNewsfeed_Pressemitteilungen.xml?nn=282672"
+    trusted: true
+
+  - name: "TRT Haber Son Dakika"
+    type: rss
+    grup: turkiye_medya
+    url: "https://www.trthaber.com/sondakika.rss"
+
+  - name: "NTV Gündem"
+    type: rss
+    grup: turkiye_medya
+    url: "https://www.ntv.com.tr/gundem.rss"
+
+  - name: "Hürriyet Anasayfa"
+    type: rss
+    grup: turkiye_medya
+    url: "https://www.hurriyet.com.tr/rss/anasayfa"
+
+  - name: "Anadolu Ajansı Güncel"
+    type: rss
+    grup: turkiye_medya
+    url: "https://www.aa.com.tr/tr/rss/default?cat=guncel"
+
+  - name: "DW Türkçe"
+    type: rss
+    grup: diaspora
+    url: "https://rss.dw.com/rdf/rss-tur-all"
+    url_fallback: ["https://rss.dw.com/xml/rss-tur-all"]
+
+  - name: "Euronews Türkçe"
+    type: rss
+    grup: diaspora
+    url: "https://tr.euronews.com/rss"
+
+  - name: "T.C. Münih Başkonsolosluğu"
+    # Doğrulandı. direct: zaten Türkçe ve resmi, olduğu gibi gider.
+    type: html
+    grup: dernek
+    url: "https://munih-bk.mfa.gov.tr/Mission"
+    direct: true
+    item_selector: "a"
+    link_must_contain: "showannouncement"
+
+  - name: "Event Türk (RSS)"                    # ?
+    type: rss
+    grup: etkinlik_avrupa
+    url: "https://eventturk.de/feed/"
+    scan: events
