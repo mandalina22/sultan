@@ -15,8 +15,8 @@
  },
  "T.C. Münih Başkonsolosluğu": {
   "ilk_tur": true,
-  "bos": 2,
-  "son_durum": "HATA: ReadTimeout: HTTPSConnectionPool(host='munih-bk.mfa.gov.tr', port=443): Read timed out. (read timeout=25)"
+  "bos": 3,
+  "son_durum": "HATA: 0 item döndü"
  },
  "Bundestag Arbeit und Soziales": {
   "ilk_tur": true,
@@ -53,7 +53,7 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "11 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
   "bos": 0,
@@ -117,7 +117,7 @@
  },
  "Anadolu Ajansı Güncel": {
   "bos": 0,
-  "son_durum": "27 item"
+  "son_durum": "30 item"
  },
  "DW Türkçe": {
   "bos": 0,
