@@ -53,11 +53,11 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "10 item"
+  "son_durum": "11 item"
  },
  "Bundespolizei München": {
-  "bos": 0,
-  "son_durum": "15 item"
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 503 Server Error: Service Unavailable for url: https://www.presseportal.de/rss/dienststelle_64017.rss2"
  },
  "MVG Betriebsmeldungen (API)": {
   "bos": 0,
@@ -96,8 +96,8 @@
   "son_durum": "15 item"
  },
  "BAMF Meldungen": {
-  "bos": 1,
-  "son_durum": "HATA: ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
+  "bos": 0,
+  "son_durum": "20 item"
  },
  "BAMF Pressemitteilungen": {
   "bos": 0,
