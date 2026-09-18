@@ -53,11 +53,11 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "11 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
-  "bos": 0,
-  "son_durum": "15 item"
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 503 Server Error: Service Unavailable for url: https://www.presseportal.de/rss/dienststelle_64017.rss2"
  },
  "MVG Betriebsmeldungen (API)": {
   "bos": 0,
@@ -117,7 +117,7 @@
  },
  "Anadolu Ajansı Güncel": {
   "bos": 0,
-  "son_durum": "23 item"
+  "son_durum": "28 item"
  },
  "DW Türkçe": {
   "bos": 0,
