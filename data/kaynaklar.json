@@ -32,8 +32,8 @@
   "son_durum": "40 item"
  },
  "tz München": {
-  "bos": 1,
-  "son_durum": "HATA: ConnectionError: HTTPSConnectionPool(host='www.tz.de', port=443): Max retries exceeded with url: /muenchen/rssfeed"
+  "bos": 0,
+  "son_durum": "40 item"
  },
  "Süddeutsche München": {
   "bos": 0,
