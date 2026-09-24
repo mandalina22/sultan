@@ -53,7 +53,7 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "10 item"
+  "son_durum": "12 item"
  },
  "Bundespolizei München": {
   "bos": 0,
@@ -112,8 +112,8 @@
   "son_durum": "20 item"
  },
  "Hürriyet Anasayfa": {
-  "bos": 1,
-  "son_durum": "HATA: 0 item döndü"
+  "bos": 0,
+  "son_durum": "40 item"
  },
  "Anadolu Ajansı Güncel": {
   "bos": 0,
@@ -124,7 +124,7 @@
   "son_durum": "15 item"
  },
  "Euronews Türkçe": {
-  "bos": 1,
-  "son_durum": "HATA: HTTPError: 406 Client Error: Not Acceptable for url: https://tr.euronews.com/rss"
+  "bos": 0,
+  "son_durum": "40 item"
  }
 }
