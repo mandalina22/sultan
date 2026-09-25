@@ -96,7 +96,7 @@
   "son_durum": "15 item"
  },
  "BAMF Meldungen": {
-  "bos": 1,
+  "bos": 2,
   "son_durum": "HATA: ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
  },
  "BAMF Pressemitteilungen": {
