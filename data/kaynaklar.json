@@ -53,7 +53,7 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "11 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
   "bos": 0,
@@ -96,8 +96,8 @@
   "son_durum": "15 item"
  },
  "BAMF Meldungen": {
-  "bos": 0,
-  "son_durum": "20 item"
+  "bos": 1,
+  "son_durum": "HATA: ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
  },
  "BAMF Pressemitteilungen": {
   "bos": 0,
