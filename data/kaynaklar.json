@@ -53,7 +53,7 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "8 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
   "bos": 0,
@@ -96,7 +96,7 @@
   "son_durum": "15 item"
  },
  "BAMF Meldungen": {
-  "bos": 1,
+  "bos": 2,
   "son_durum": "HATA: ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
  },
  "BAMF Pressemitteilungen": {
@@ -124,7 +124,7 @@
   "son_durum": "15 item"
  },
  "Euronews Türkçe": {
-  "bos": 1,
-  "son_durum": "HATA: HTTPError: 406 Client Error: Not Acceptable for url: https://tr.euronews.com/rss"
+  "bos": 0,
+  "son_durum": "40 item"
  }
 }
