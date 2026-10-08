@@ -11,7 +11,7 @@
  "Rathaus Umschau": {
   "ilk_tur": true,
   "bos": 0,
-  "son_durum": "26 item"
+  "son_durum": "24 item"
  },
  "T.C. Münih Başkonsolosluğu": {
   "ilk_tur": true,
@@ -24,16 +24,16 @@
   "son_durum": "15 item"
  },
  "Merkur München": {
-  "bos": 1,
-  "son_durum": "HATA: ConnectTimeout: HTTPSConnectionPool(host='www.merkur.de', port=443): Max retries exceeded with url: /lokales/muenc"
+  "bos": 0,
+  "son_durum": "40 item"
  },
  "Merkur Bayern": {
-  "bos": 1,
-  "son_durum": "HATA: ConnectTimeout: HTTPSConnectionPool(host='www.merkur.de', port=443): Max retries exceeded with url: /bayern/rssfee"
+  "bos": 0,
+  "son_durum": "40 item"
  },
  "tz München": {
-  "bos": 1,
-  "son_durum": "HATA: ConnectTimeout: HTTPSConnectionPool(host='www.tz.de', port=443): Max retries exceeded with url: /muenchen/rssfeed."
+  "bos": 0,
+  "son_durum": "40 item"
  },
  "Süddeutsche München": {
   "bos": 0,
@@ -53,7 +53,7 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "12 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
   "bos": 0,
@@ -117,14 +117,14 @@
  },
  "Anadolu Ajansı Güncel": {
   "bos": 0,
-  "son_durum": "23 item"
+  "son_durum": "30 item"
  },
  "DW Türkçe": {
   "bos": 0,
   "son_durum": "15 item"
  },
  "Euronews Türkçe": {
-  "bos": 0,
-  "son_durum": "40 item"
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 406 Client Error: Not Acceptable for url: https://tr.euronews.com/rss"
  }
 }
