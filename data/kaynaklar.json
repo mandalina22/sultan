@@ -56,8 +56,8 @@
   "son_durum": "10 item"
  },
  "Bundespolizei München": {
-  "bos": 0,
-  "son_durum": "15 item"
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 429 Client Error: Too Many Requests for url: https://www.presseportal.de/rss/dienststelle_64017.rss2"
  },
  "MVG Betriebsmeldungen (API)": {
   "bos": 0,
@@ -117,14 +117,14 @@
  },
  "Anadolu Ajansı Güncel": {
   "bos": 0,
-  "son_durum": "30 item"
+  "son_durum": "26 item"
  },
  "DW Türkçe": {
   "bos": 0,
   "son_durum": "15 item"
  },
  "Euronews Türkçe": {
-  "bos": 1,
-  "son_durum": "HATA: HTTPError: 406 Client Error: Not Acceptable for url: https://tr.euronews.com/rss"
+  "bos": 0,
+  "son_durum": "40 item"
  }
 }
