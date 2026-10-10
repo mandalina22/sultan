@@ -53,10 +53,10 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "13 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
-  "bos": 1,
+  "bos": 2,
   "son_durum": "HATA: HTTPError: 503 Server Error: Service Temporarily Unavailable for url: https://www.presseportal.de/rss/dienststelle"
  },
  "MVG Betriebsmeldungen (API)": {
@@ -124,7 +124,7 @@
   "son_durum": "15 item"
  },
  "Euronews Türkçe": {
-  "bos": 2,
+  "bos": 3,
   "son_durum": "HATA: HTTPError: 406 Client Error: Not Acceptable for url: https://tr.euronews.com/rss"
  }
 }
