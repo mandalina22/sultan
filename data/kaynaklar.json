@@ -108,8 +108,8 @@
   "son_durum": "40 item"
  },
  "NTV Gündem": {
-  "bos": 1,
-  "son_durum": "HATA: HTTPError: 403 Client Error: Forbidden for url: https://www.ntv.com.tr/gundem.rss"
+  "bos": 0,
+  "son_durum": "20 item"
  },
  "Hürriyet Anasayfa": {
   "bos": 0,
