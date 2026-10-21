@@ -10,7 +10,7 @@
  },
  "Rathaus Umschau": {
   "ilk_tur": true,
-  "bos": 1,
+  "bos": 2,
   "son_durum": "HATA: HTTPError: 403 Client Error: Forbidden for url: https://ru.muenchen.de/"
  },
  "T.C. Münih Başkonsolosluğu": {
