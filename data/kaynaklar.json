@@ -10,8 +10,8 @@
  },
  "Rathaus Umschau": {
   "ilk_tur": true,
-  "bos": 0,
-  "son_durum": "21 item"
+  "bos": 1,
+  "son_durum": "HATA: HTTPError: 403 Client Error: Forbidden for url: https://ru.muenchen.de/"
  },
  "T.C. Münih Başkonsolosluğu": {
   "ilk_tur": true,
@@ -53,7 +53,7 @@
  },
  "BR24": {
   "bos": 0,
-  "son_durum": "9 item"
+  "son_durum": "10 item"
  },
  "Bundespolizei München": {
   "bos": 3,
